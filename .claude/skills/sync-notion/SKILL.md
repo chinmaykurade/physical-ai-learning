@@ -80,8 +80,11 @@ State these when they bite rather than silently shipping a lossy mirror:
   and renders the `+` as a bullet, corrupting notes like ``  `model.safetensors` + config  ``.
   The converter escapes this case (`PLUS_AFTER_CODE`). If a new variant appears, fix it in the
   converter, not by hand-editing Notion.
-- **`update_content` search-and-replace is unreliable against stored text** whose whitespace
-  Notion normalised on ingest. This is why step 2 uses `replace_content`, not targeted patches.
+- **`update_content` search-and-replace is unreliable**, on two counts: matching against stored
+  text whose whitespace Notion normalised on ingest often silently no-ops, and Notion strips the
+  converter's `\+` escape on this path so the bullet corruption reappears. Both are why step 2
+  uses `replace_content` — a full replace from converter output is the only reliable push. Do not
+  reach for targeted patches to "save a few tokens"; they fail quietly.
 - The emoji status legend (`☐ ◐ ☑ ⤴ ✂`) survives as plain text and reads fine.
 
 ## When the connector is missing
