@@ -141,9 +141,9 @@ substantially faster than a serial pip resolve.
 bash scripts/build_image.sh <dockerhub-user>      # ~10-15 min once, then push
 ```
 
-Then create the template once: **Templates → New Template**, container image
-`<dockerhub-user>/lerobot-so101:0.6.0`, volume mount path `/workspace`, and the same two env
-vars. Deploy from that template (still with the CUDA 13.x filter).
+Then create the template once — **[docker/RUNPOD_TEMPLATE.md](../docker/RUNPOD_TEMPLATE.md) has
+every field to paste into the console**, plus the deploy steps and troubleshooting. Deploy from
+that template (still with the CUDA 13.x filter).
 
 The bootstrap detects the baked venv at `/opt/lerobot-env` and skips installing entirely —
 it just verifies and writes `env.sh`. Same command either way:

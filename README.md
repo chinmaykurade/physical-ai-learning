@@ -17,5 +17,6 @@ jobs locally and on rented cloud GPUs.
 | [docs/backlog.md](docs/backlog.md) | Deferred items, the stretch watchlist, and gate-review history |
 | [env/README.md](env/README.md) | The uv-managed venv at `/home/chinmay/lerobot-env` and how to regenerate its lock |
 | [scripts/README.md](scripts/README.md) | Training jobs and cloud runs: RunPod pod setup, the environment bootstrap, the canonical pusht job |
+| [docker/RUNPOD_TEMPLATE.md](docker/RUNPOD_TEMPLATE.md) | The prebuilt image and the exact RunPod template settings to paste into the console |
 | [notes/](notes/) | Weekly logs and G7 phase writeups |
 | [CLAUDE.md](CLAUDE.md) | Durable project context for Claude Code sessions |
