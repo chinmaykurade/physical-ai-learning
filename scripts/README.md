@@ -61,6 +61,7 @@ it holds the venv (~8 GB), the HF dataset cache, and checkpoints.
 | Field | Value |
 |---|---|
 | Datacenter | The one holding your network volume |
+| **CUDA filter** | **Additional filters → CUDA Versions → 13.x.** Required — see below |
 | GPU | **RTX A5000** (~$0.27/hr) for plumbing tests |
 | Container image | `runpod/pytorch:1.1.0-cu1300-torch291-ubuntu2404` |
 | Network volume | Attach it — mount path `/workspace` |
@@ -95,13 +96,25 @@ repo arrives by `git clone`.
 
 ```bash
 cd /workspace
-git clone https://github.com/chinmaykurade/physical-ai-learning.git
+# Already cloned (the volume survives pod termination)? Just update:
+#   cd /workspace/physical-ai-learning && git pull
+git clone --depth 1 https://github.com/chinmaykurade/physical-ai-learning.git
 cd physical-ai-learning
 
 bash scripts/runpod_bootstrap.sh              # ~6-8 min first boot, ~5 s after
 bash scripts/train_pusht_toy.sh --steps=200   # smoke test, ~1 min
 bash scripts/train_pusht_toy.sh               # full 5000-step run
 ```
+
+> **Cloning a private repo.** GitHub dropped password auth for HTTPS, so a plain
+> `git clone` of a private repo prompts and fails on the pod. Either make the repo public
+> (it holds no secrets — `.env` is gitignored), or add a `repo`-scoped GitHub PAT as a RunPod
+> secret and clone with it:
+> ```bash
+> git clone --depth 1 https://$GITHUB_PAT@github.com/chinmaykurade/physical-ai-learning.git
+> ```
+> with pod env var `GITHUB_PAT = {{ RUNPOD_SECRET_github_pat }}`, which keeps the token out of
+> shell history. The repo is <1 MB, so clone time is never the bottleneck — auth is.
 
 For a long run, use `tmux` so a dropped SSH session doesn't kill training:
 
@@ -209,11 +222,22 @@ Template names don't guarantee the torch inside them anyway —
 [runpod/containers#114](https://github.com/runpod/containers/issues/114) documents a
 "PyTorch 2.8.0 cu128" template that shipped torch 2.4.1.
 
-**Driver requirement.** CUDA 13.x needs host driver **≥ 580**. RunPod hosts running the
-`cu1300` images have been observed at 580.126.09, so this normally passes, but the image name
-constrains the container and not the host — there is still no `--min-cuda-version` filter
-([runpodctl#253](https://github.com/runpod/runpodctl/issues/253)). The bootstrap asserts it in
-the first few seconds and aborts with instructions rather than failing deep inside an install.
+**Driver requirement — set the CUDA filter, or the pod will fail.** CUDA 13.x needs host
+driver **≥ 580**. The image name constrains the *container*, not the *host*: a `cu1300` image
+lands on driver-570 hosts routinely, and then nothing CUDA-13 can run.
+
+Fix it at deploy time: **Deploy → Additional filters → CUDA Versions → 13.x**. That schedules
+you onto a host with a new enough driver. (The equivalent CLI flag still doesn't exist —
+[runpodctl#253](https://github.com/runpod/runpodctl/issues/253) — but the console filter
+works.)
+
+Observed in practice: an unfiltered deploy landed an RTX 4090 on driver **570.211.01**, and
+the bootstrap aborted in ~3 seconds. Terminate and redeploy with the filter set; `/workspace`
+survives termination, so nothing is lost.
+
+**Forward compatibility is not a workaround here.** `cuda-compat-13-x` requires a base driver
+of ≥ 580 itself, and NVIDIA supports forward compatibility only on Data Center GPUs — not on
+GeForce cards like the 4090/A5000. There is no way to run CUDA 13 on a 570 host.
 
 ---
 

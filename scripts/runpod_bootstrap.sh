@@ -61,9 +61,16 @@ ok "driver: $DRIVER"
 
 if [ "$DRIVER_MAJOR" -lt "$MIN_DRIVER" ]; then
   die "driver $DRIVER is too old for CUDA 13 (need >= $MIN_DRIVER)." \
-"torch==2.11.0 requires the CUDA 13 stack, which cannot run on this host.
-      Terminate this pod and deploy on a host with driver >= $MIN_DRIVER
-      (the runpod/pytorch:*-cu1300-* images normally land on 580+)."
+"torch==2.11.0 requires the CUDA 13 stack, and this HOST driver cannot run it.
+      The cu1300 image does not guarantee the host driver -- you must filter for it.
+
+      Terminate this pod, then redeploy with:
+        Deploy -> Additional filters -> CUDA Versions -> select 13.x
+      That schedules you onto a host with driver >= $MIN_DRIVER.
+
+      /workspace survives termination, so the repo and any cached env persist.
+      (Forward compatibility is not an option here: cuda-compat-13-x itself
+      needs a >= 580 base driver, and it is unsupported on GeForce cards.)"
 fi
 ok "driver supports CUDA 13"
 
