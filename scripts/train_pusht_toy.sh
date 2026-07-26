@@ -42,20 +42,20 @@ for arg in "$@"; do
 done
 
 # ------------------------------------------------------------ environment
-POD_ENV=/workspace/lerobot-env/env.sh
+# The bootstrap writes env.sh next to whichever venv it used: /opt/lerobot-env
+# when the image prebakes one, /workspace/lerobot-env when it builds on the
+# volume. Check both -- checking only the volume path made a prebaked pod
+# report "no environment found".
+POD_ENV=""
+for candidate in /opt/lerobot-env/env.sh /workspace/lerobot-env/env.sh; do
+  [ -f "$candidate" ] && { POD_ENV="$candidate"; break; }
+done
 LOCAL_VENV=/home/chinmay/lerobot-env
 
-if [ -f "$POD_ENV" ]; then
+if [ -n "$POD_ENV" ]; then
   # shellcheck disable=SC1090
   . "$POD_ENV"
-  # A prebuilt image bakes the venv at /opt/lerobot-env; a volume-built one
-  # lives at /workspace/lerobot-env. env.sh puts the right one on PATH, but
-  # resolve it explicitly so the script does not depend on PATH ordering.
-  if [ -x /opt/lerobot-env/bin/lerobot-train ]; then
-    PYBIN=/opt/lerobot-env/bin
-  else
-    PYBIN=/workspace/lerobot-env/bin
-  fi
+  PYBIN="$(dirname "$POD_ENV")/bin"
   OUT_ROOT=/workspace/outputs
   WHERE="runpod"
 elif [ -x "$LOCAL_VENV/bin/lerobot-train" ]; then
