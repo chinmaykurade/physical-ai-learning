@@ -41,6 +41,11 @@ docker build --platform=linux/amd64 -t "$TAG" "$CTX"
 
 echo "==> image size"
 docker images --format '    {{.Repository}}:{{.Tag}}  {{.Size}}' "$TAG"
+cat <<'EOF'
+    Expect roughly 20-25 GB uncompressed (~8-10 GB compressed, which is what
+    the pod actually pulls). Much larger means the uv cache is being baked in
+    -- check UV_NO_CACHE=1 in docker/Dockerfile.
+EOF
 
 if [ "$PUSH" -eq 1 ]; then
   echo "==> pushing $TAG"

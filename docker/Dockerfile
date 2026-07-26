@@ -11,19 +11,27 @@
 # RunPod requires linux/amd64. The venv is baked at /opt/lerobot-env -- NOT on
 # /workspace, which is replaced by the network volume mount at runtime.
 
-FROM runpod/pytorch:1.1.0-cu1300-torch291-ubuntu2404
+# runpod/base, not runpod/pytorch: the pytorch image ships its own torch 2.9.1
+# plus a full CUDA wheel set that we never use (our venv installs torch 2.11.0
+# and bundles its own CUDA libs). Docker layers are additive, so that torch
+# cannot be deleted -- only avoided by not starting from it. 6.9 GB vs 10.5 GB
+# compressed, and it still provides CUDA 13.0, Ubuntu 24.04 and sshd.
+FROM runpod/base:1.1.0-cuda1300-ubuntu2404
 
 # torchcodec links against system FFmpeg; libgl1/libglib2.0-0 keep opencv and
 # pygame importable in a headless container.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        ffmpeg libgl1 libglib2.0-0 git && \
+        ffmpeg libgl1 libglib2.0-0 git curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 ENV VENV=/opt/lerobot-env
-ENV UV_LINK_MODE=copy
+# --no-cache on every install: a cached wheel inside the image is dead weight,
+# since nothing will ever reinstall from it. Without this the image carries the
+# ~6 GB of downloaded archives alongside the ~6 GB of installed files.
+ENV UV_NO_CACHE=1
 
 # Three sequenced passes, matching scripts/runpod_bootstrap.sh. Kept as
 # separate layers so an edit to the lock file does not re-download torch.
@@ -75,4 +83,8 @@ COPY verify.py /tmp/verify.py
 RUN "$VENV/bin/python" /tmp/verify.py && rm -f /tmp/verify.py
 
 WORKDIR /workspace
-CMD ["/start.sh"]
+
+# /start.sh is the RunPod images' own entrypoint: it sets up sshd and the
+# proxy. Fall back to sleeping if a future base drops it, so the pod still
+# boots and stays reachable rather than exiting immediately.
+CMD ["/bin/bash", "-lc", "if [ -x /start.sh ]; then /start.sh; else echo 'no /start.sh; idling' && sleep infinity; fi"]

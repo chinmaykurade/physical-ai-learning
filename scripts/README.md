@@ -163,6 +163,18 @@ rather than ~6–8 minutes of installing. The bigger wins are that the install b
 build asserts torch 2.11.0 + CUDA 13 and a headless PushT render, so a broken environment
 cannot ship.
 
+**Image size.** Expect ~20–25 GB uncompressed, ~8–10 GB compressed — the compressed figure
+is what a pod actually pulls. Two things keep it there, and both matter:
+
+- `UV_NO_CACHE=1`. Without it uv bakes its wheel archives *into the image*, so every package
+  is stored twice — a ~49 GB image instead of ~25 GB.
+- The base is **`runpod/base:...-cuda1300-...`**, not `runpod/pytorch:...`. The pytorch image
+  ships torch 2.9.1 and a full CUDA wheel set that this project never uses (our venv installs
+  torch 2.11.0 and bundles its own CUDA libraries). Docker layers are additive, so that torch
+  cannot be deleted afterwards — only avoided by not starting from it.
+
+If a build comes out much larger, check those two before anything else.
+
 Note the venv is baked at `/opt/lerobot-env`, **not** `/workspace` — the network volume is
 mounted over `/workspace` at runtime and would hide anything the image put there.
 
