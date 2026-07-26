@@ -1,6 +1,6 @@
 ---
 name: sync-notion
-description: Push docs/progress.md and docs/backlog.md to their read-only Notion mirror pages. Use for "/sync-notion", "sync Notion", "update the Notion mirror", or after any tracker edit that should show up on the phone. Git is the source of truth; this is push-only and never reads status back from Notion.
+description: Push the trackers (docs/progress.md, docs/backlog.md) and the reference specs (build plan, learning roadmap) to their read-only Notion mirror pages. Use for "/sync-notion", "sync Notion", "update the Notion mirror", or after any tracker edit that should show up on the phone. Git is the source of truth; this is push-only and never reads status back from Notion.
 ---
 
 # /sync-notion — push the tracker mirror to Notion
@@ -17,15 +17,24 @@ mirror is stale.
 
 ## The pages
 
-| Doc | Notion page | Page ID |
-|---|---|---|
-| parent | [SO-101 Embodied AI](https://app.notion.com/p/3a9c6576670181b2a66deb8035f097d2) | `3a9c6576-6701-81b2-a66d-eb8035f097d2` |
-| `docs/progress.md` | [Progress Tracker](https://app.notion.com/p/3a9c657667018121a797dda10eec5ce9) | `3a9c6576-6701-8121-a797-dda10eec5ce9` |
-| `docs/backlog.md` | [Backlog](https://app.notion.com/p/3a9c657667018119a2a5ee863bde5d45) | `3a9c6576-6701-8119-a2a5-ee863bde5d45` |
+| Payload | Doc | Notion page | Page ID |
+|---|---|---|---|
+| — | — | [SO-101 Embodied AI](https://app.notion.com/p/3a9c6576670181b2a66deb8035f097d2) (parent) | `3a9c6576-6701-81b2-a66d-eb8035f097d2` |
+| `progress` | `docs/progress.md` | [Progress Tracker](https://app.notion.com/p/3a9c657667018121a797dda10eec5ce9) | `3a9c6576-6701-8121-a797-dda10eec5ce9` |
+| `backlog` | `docs/backlog.md` | [Backlog](https://app.notion.com/p/3a9c657667018119a2a5ee863bde5d45) | `3a9c6576-6701-8119-a2a5-ee863bde5d45` |
+| `plan` | `docs/so101-embodied-ai-project-plan.md` | [Build Plan (reference)](https://app.notion.com/p/3a9c65766701817e8f7ce4fe39822021) | `3a9c6576-6701-817e-8f7c-e4fe39822021` |
+| `roadmap` | `docs/physical-ai-learning-roadmap.md` | [Learning Roadmap (reference)](https://app.notion.com/p/3a9c65766701817283b2e9de9b6ffebf) | `3a9c6576-6701-8172-83b2-e9de9b6ffebf` |
 
 These IDs are stable. Reuse them — do **not** create new pages. Creating a second "Progress
 Tracker" is the main failure mode to avoid, because then the phone view and the repo diverge
-silently with no way to tell which page is live.
+silently with no way to tell which page is live. The same IDs are also hard-coded in the
+converter's `NOTION_PAGES` map, which rewrites cross-document links; if a page is ever
+recreated, both places must change.
+
+**The trackers and the specs move at different speeds.** progress.md and backlog.md change
+constantly and should be synced on every tracker edit. The plan and roadmap are specifications
+that change only at phase gates — syncing them every time is harmless but usually pointless, so
+when only a status changed, push `progress` and `backlog` and leave the other two alone.
 
 ## How to run it
 
@@ -35,7 +44,8 @@ silently with no way to tell which page is live.
    scripts/notion_sync_payload.sh /tmp/notion-sync
    ```
 
-   It prints `sha=`, `date=`, and the two payload paths. The converter
+   It prints `sha=`, `date=`, and one path per payload (`progress=`, `backlog=`, `plan=`,
+   `roadmap=`). The converter
    ([scripts/md_to_notion.py](../../../scripts/md_to_notion.py)) turns GitHub pipe tables into
    Notion `<table>` XML — Notion's markdown does not accept pipe tables — and prepends a
    read-only provenance callout naming the source file, the commit, and the sync date.

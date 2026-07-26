@@ -18,7 +18,7 @@ it does not duplicate them.
 | **Next [Deep]** | ACT / ALOHA (2304.13705), L-A week 4 |
 | **Pacing track** | Standard (5–6 h/wk build + 3–5 h/wk study) |
 | **Next gate** | L0 exit — sim pipeline proven, tooling live |
-| **Last updated** | 2026-07-26 |
+| **Last updated** | 2026-07-26 (Notes columns trimmed to the one-line budget; detail moved to `notes/`) |
 
 **Status legend:** ☐ not started · ◐ in progress · ☑ done · ⤴ moved to [backlog.md](backlog.md)
 · ✂ cut (recorded, never silent)
@@ -67,7 +67,7 @@ runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to 
 |---|---|---|
 | Order BOM-A: 13× STS3215-C018, 2× Waveshare adapter, 12 V 5 A PSU, workspace webcam, wrist cam, fasteners | ☑ | Ordered 2026-07-26. Verify C018 suffix on arrival (R1) |
 | Order BOM-B: Bambu Lab P2S (Combo or standalone) + PLA ×3 kg, PETG 1 kg, TPU 0.5–1 kg, spare nozzle | ☑ | Ordered 2026-07-26 (R13 watch until it ships) |
-| Order BOM-C recommended minimum: gamepad, inline fuse + kill-switch, spare gear sets ×2, calipers | ☑ | Ordered 2026-07-26. Gamepad — existing PS5 controller. Calipers — ordered. R8 kit — Littelfuse ATOF 287 fuses `0287005.PXCN` (5 A, primary) + `028707.5PXCN` (7.5 A, step-up), inline ATO blade fuse holder, Daier `KCD3-101N-R` illuminated rocker (12 V lamp, SPST, 20 A/125 VAC). Fuse+switch were cut and reinstated same day — a fuse sits in series between PSU and driver, so direct wiring does not displace it. Spare gear sets — **✂ cut 2026-07-26**: no standalone 1:345 SKU found at Robu/AliExpress/Feetech resellers; the 13th spare servo covers R2 |
+| Order BOM-C recommended minimum: gamepad, inline fuse + kill-switch, spare gear sets ×2, calipers | ☑ | Ordered 2026-07-26; gamepad = existing PS5 controller. Spare gear sets **✂ cut 2026-07-26**, no SKU exists (see [backlog.md](backlog.md)). R8 part numbers in [notes](../notes/2026-07-26-week0-runpod-cloud-path.md) |
 | Receive and inspect all parts | ☐ | Build exit criterion |
 | Calibrate the printer | ☐ | Risk R3 |
 | Print all follower parts | ☐ | Print-service fallback if printer slips (R13) |
@@ -77,11 +77,11 @@ runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to 
 | Create the Python environment | ☑ | uv venv at `/home/chinmay/lerobot-env`, Python 3.12.3 |
 | Install LeRobot + Feetech extras, pinned | ☑ | `lerobot==0.6.0`; 18 `lerobot-*` CLI entry points present |
 | Verify GPU path (torch/CUDA/bf16) | ☑ | torch 2.11.0+cu130, CUDA 13.0, sm_86, bf16 native |
-| Capture the env lock file | ☑ | `env/lerobot-env.lock.txt`. Regenerated 2026-07-26: 116 → 154 packages, **38 insertions / 0 deletions** — pure capture of already-installed drift (wandb, matplotlib, the ipykernel stack), no version changed, so not a roadmap §8 rule 2 pin change. The old lock was missing `wandb`, which the training command needs |
+| Capture the env lock file | ☑ | `env/lerobot-env.lock.txt`. Regenerated 2026-07-26: 116 → 154 pkgs, no version changed (not a rule-2 pin change) |
 | Run simulated teleoperation | ☐ | Build exit criterion |
-| Run a toy training job end to end | ☑ | **Exit criterion met 2026-07-26.** Diffusion Policy on `lerobot/pusht`, 5000 steps, bs 64, ~18 min on the 3080. Checkpoints at `outputs/train/pusht_diffusion_toy/checkpoints/{002500,005000,last}`; W&B project `so101-embodied-ai`. Needed `--eval.use_async_envs=false` — LeRobot 0.6.0 sets `context="forkserver"` for AsyncVectorEnv without preloading `gym_pusht`, so workers hit `NamespaceNotFound` |
-| Set up Hugging Face account (datasets + hub) | ☑ | 2026-07-26. Account `chinmaykurade`; CLI login verified via `whoami`. **Model push verified end to end 2026-07-26**, both locally and from a RunPod pod: 1.05 GB (`model.safetensors` + config + both processors + generated card), ~2 min upload. Live artifact: `chinmaykurade/pusht_diffusion_runpod_01`. Local auth is a cached `hf auth login` token; the pod needs `HF_TOKEN` (write scope) as an env var. Plan §5.2 |
-| Set up RunPod (or equivalent) account, ₹2,000–3,000 budget | ☑ | Account created 2026-07-26. **Cloud path proven end to end 2026-07-26**: pod → prebaked env → training → W&B → Hub push. Diffusion Policy on `lerobot/pusht`, 2000 steps, bs 64; W&B project `so101-embodied-ai`; weights at `chinmaykurade/pusht_diffusion_runpod_01` (private, 1.05 GB). Automation in `scripts/` + `docker/`; template settings in `docker/RUNPOD_TEMPLATE.md`. Two constraints found the hard way: **deploy must set Additional filters → CUDA Versions → 13.x** (an unfiltered 4090 landed on driver 570.211.01; `torch==2.11.0` needs the CUDA 13 stack and driver ≥580), and the prebuilt image must start `FROM runpod/base:*-cuda1300-*`, since `runpod/pytorch` adds a second unused torch. Phase-C A100 spend still ahead |
+| Run a toy training job end to end | ☑ | **Exit criterion met 2026-07-26.** DP on `lerobot/pusht`, 5000 steps, ~18 min on the 3080 → `outputs/train/pusht_diffusion_toy/`. [notes](../notes/2026-07-26-week0-runpod-cloud-path.md) |
+| Set up HF account (datasets + hub) | ☑ | 2026-07-26, account `chinmaykurade`. Model push verified local + pod → `chinmaykurade/pusht_diffusion_runpod_01`. Plan §5.2 |
+| Set up RunPod (or equivalent) account, ₹2,000–3,000 budget | ☑ | Account 2026-07-26. **Cloud path proven end to end**; automation in `scripts/` + `docker/`, see `docker/RUNPOD_TEMPLATE.md` and [notes](../notes/2026-07-26-week0-runpod-cloud-path.md). Phase-C A100 spend still ahead |
 | Set up the workspace: rigid desk, clamped camera, fixed lighting, taped positions | ☐ | Plan §5.4 — this is risk R4 prevention |
 
 ### Study — Core
@@ -476,3 +476,7 @@ No Stretch items — L-E is all Core.
 - ✂ (cut) requires a dated reason in the Notes column. Nothing disappears silently.
 - Update **Where I am now** at every phase gate — current phase, [Deep] in flight, next gate.
 - Weekly log prose goes in `notes/`, not here. This file holds status only.
+- **Notes cells are one line — ~15 words, two clauses at most.** They carry only what cannot be
+  recomputed: a date, a version, a measurement, an identifier, a path, a risk ID, an
+  exit-criterion marker. Reasons, error text, diagnoses and narrative go to `notes/`; the cell
+  gets a pointer to the file. A cell that restates a notes file is duplication that will drift.

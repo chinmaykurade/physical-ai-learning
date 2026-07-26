@@ -103,7 +103,8 @@ guess at a row that would change a goal or a gate.
 **Then apply, per the status legend:**
 
 - **☑ done** — flip the status. Add a short evidence note in the Notes column when there is
-  one (a version, a measurement, a checkpoint path). Prose belongs in `notes/`, not here.
+  one (a version, a measurement, a checkpoint path). See **Notes column budget** below —
+  prose belongs in `notes/`, not here.
 - **◐ in progress** — flip on "started". If the item is [Deep], it must become the *Current
   [Deep] in flight* in both progress.md and the backlog's one-in-flight tracker; if another
   [Deep] is already in flight, say so and ask which one holds the slot before editing.
@@ -123,6 +124,32 @@ promises and the project's first rule is that nothing is silently dropped.
 **Depth tags are never edited in place.** A [Deep]→[Read] demotion is written as a demotion:
 the Tag column becomes `[Read] (was [Deep])` and the Notes column gets
 `[Deep]→[Read] on YYYY-MM-DD, reason`.
+
+### Notes column budget
+
+progress.md is a status board, not a log. **A Notes cell is one line — roughly 15 words, and
+never more than two clauses.** It carries only what you cannot recompute: a date, a version, a
+measurement, an identifier, a path, a risk ID, an exit-criterion marker.
+
+What belongs in a Notes cell:
+
+- `2026-07-26. torch 2.11.0+cu130, CUDA 13.0, sm_86, bf16 native`
+- `Exit criterion met 2026-07-26. See notes/2026-07-26-week0-runpod-cloud-path.md`
+- `Build exit criterion` · `Risk R3` · `Ordered 2026-07-26, verify C018 on arrival (R1)`
+
+What does **not**, no matter how hard-won:
+
+- *Why* something failed, the error text, the diagnosis, the workaround — that is a `notes/`
+  entry. Link to it instead.
+- Narrative ("found the hard way", "two constraints", "cut and reinstated same day").
+- Anything already recorded in `notes/`, the plan, the roadmap, or git history. A tracker cell
+  that restates a notes file is duplication that will drift out of sync.
+
+**When a completion has real substance behind it, the substance goes to `notes/` and the cell
+gets a pointer.** If no notes file exists yet for it, say so in the report and offer to write
+one — do not park the prose in the tracker as a substitute. When trimming an over-long cell,
+verify the detail survives in `notes/` **before** cutting it; if it does not, move it, don't
+delete it.
 
 **Propagate.** After any status edit, check whether these need to move too:
 

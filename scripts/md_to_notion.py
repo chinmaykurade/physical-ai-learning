@@ -33,12 +33,16 @@ CELL_ESCAPE = str.maketrans({"|": r"\|", "<": r"\<", ">": r"\>"})
 # config". Escaping the plus keeps it literal. Observed on ingest 2026-07-26.
 PLUS_AFTER_CODE = re.compile(r"(`)(\s+)\+(\s+)")
 
-# Repo-relative links are dead in Notion. Mirrored docs point at their Notion
-# page; the plan and roadmap have no mirror, so they degrade to plain text
-# naming the file rather than a link that goes nowhere.
+# Repo-relative links are dead in Notion. Every mirrored doc points at its Notion
+# page; anything unmirrored (notes/ files) degrades to plain text naming the file
+# rather than a link that goes nowhere.
 NOTION_PAGES = {
     "backlog.md": "https://app.notion.com/p/3a9c657667018119a2a5ee863bde5d45",
     "progress.md": "https://app.notion.com/p/3a9c657667018121a797dda10eec5ce9",
+    "so101-embodied-ai-project-plan.md":
+        "https://app.notion.com/p/3a9c65766701817e8f7ce4fe39822021",
+    "physical-ai-learning-roadmap.md":
+        "https://app.notion.com/p/3a9c65766701817283b2e9de9b6ffebf",
 }
 
 MD_LINK = re.compile(r"\[([^\]]+)\]\((?!https?:)([A-Za-z0-9._/-]+\.md)(#[^)]*)?\)")
@@ -51,9 +55,13 @@ def rewrite_links(text):
         label, target, _anchor = m.group(1), m.group(2), m.group(3)
         base = target.rsplit("/", 1)[-1]
         url = NOTION_PAGES.get(base)
-        # Anchors are dropped: Notion heading anchors do not match the source
-        # file's slugs, so a fragment would land on the wrong place or nowhere.
-        return f"[{label}]({url})" if url else label
+        if url:
+            # Anchors are dropped: Notion heading anchors do not match the source
+            # file's slugs, so a fragment would land in the wrong place or nowhere.
+            return f"[{label}]({url})"
+        # Unmirrored file (a notes/ entry): keep the path visible, since a bare
+        # label like "notes" gives no way to find the file back in the repo.
+        return f"{label} (`{target}`)" if label.lower() in {"notes", "note"} else label
 
     return MD_LINK.sub(repl, text)
 

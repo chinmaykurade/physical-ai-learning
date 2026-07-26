@@ -59,6 +59,19 @@ any lock file as a complete build input.
 **Also:** the lock was 38 packages stale (missing `wandb`, which the training command needs).
 `uv pip freeze` after every change is a real instruction, not a nicety.
 
+**The toy training job needs `--eval.use_async_envs=false`.** LeRobot 0.6.0 constructs
+`AsyncVectorEnv` with `context="forkserver"` but does not preload `gym_pusht` in the workers, so
+each worker starts a fresh interpreter without the env registered and dies on
+`NamespaceNotFound`. Disabling async envs sidesteps it. This applies to the local 5000-step run
+and any future pusht eval — worth remembering rather than re-diagnosing.
+
+**The R8 fuse and kill-switch parts, for reordering.** Littelfuse ATOF 287 blade fuses
+`0287005.PXCN` (5 A, the primary) and `028707.5PXCN` (7.5 A, the step-up if the 5 A nuisance-
+trips under stall current), an inline ATO blade fuse holder, and a Daier `KCD3-101N-R`
+illuminated rocker (12 V lamp, SPST, 20 A/125 VAC). The fuse sits in series between PSU and
+motor driver, so wiring the PSU straight to the driver never displaced the need for it — which
+is why the BOM-C cut of this line was reversed the same day it was made.
+
 ---
 
 ## What surprised me

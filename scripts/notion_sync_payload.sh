@@ -19,20 +19,34 @@ mkdir -p "$outdir"
 sha="$(git rev-parse --short HEAD)"
 today="$(date +%F)"
 
-# Flag uncommitted tracker edits: the mirror would then reflect working-tree
-# state that no commit records, which makes the provenance line misleading.
+# The four mirrored docs: output basename -> source file. The trackers are the
+# live status board; the plan and roadmap are specifications, mirrored purely for
+# reference away from the workstation.
+declare -A DOCS=(
+	[progress]="docs/progress.md"
+	[backlog]="docs/backlog.md"
+	[plan]="docs/so101-embodied-ai-project-plan.md"
+	[roadmap]="docs/physical-ai-learning-roadmap.md"
+)
+
+# Flag uncommitted edits: the mirror would then reflect working-tree state that no
+# commit records, which makes the provenance line misleading.
 dirty=""
-if ! git diff --quiet -- docs/progress.md docs/backlog.md 2>/dev/null; then
+if ! git diff --quiet -- "${DOCS[@]}" 2>/dev/null; then
 	dirty=" (uncommitted local edits)"
 fi
 
-for doc in progress backlog; do
-	header="Read-only mirror. Do not edit — overwritten on next sync. Source: \`docs/${doc}.md\` at commit \`${sha}\`${dirty} · synced ${today}."
-	python3 scripts/md_to_notion.py "docs/${doc}.md" --header "$header" \
-		> "${outdir}/${doc}.notion.md"
-done
-
 echo "sha=${sha}${dirty}"
 echo "date=${today}"
-echo "progress=${outdir}/progress.notion.md"
-echo "backlog=${outdir}/backlog.notion.md"
+
+for name in progress backlog plan roadmap; do
+	src="${DOCS[$name]}"
+	spec=""
+	if [[ $name == plan || $name == roadmap ]]; then
+		spec=" This is a specification — revised only at a phase gate, never as a side effect of a status update."
+	fi
+	header="Read-only mirror. Do not edit — overwritten on next sync. Source: \`${src}\` at commit \`${sha}\`${dirty} · synced ${today}.${spec}"
+	python3 scripts/md_to_notion.py "$src" --header "$header" \
+		> "${outdir}/${name}.notion.md"
+	echo "${name}=${outdir}/${name}.notion.md"
+done
