@@ -45,11 +45,20 @@ RUN uv pip install --python "$VENV/bin/python" \
 COPY lerobot-env.lock.txt /tmp/lock.txt
 RUN grep -viE '^(torch|torchvision)==' /tmp/lock.txt > /tmp/req.txt && \
     uv pip install --python "$VENV/bin/python" -r /tmp/req.txt && \
-    rm -f /tmp/lock.txt /tmp/req.txt
+    rm -f /tmp/req.txt
 
 # The GUI opencv build comes from gymnasium[other]; LeRobot pins only the
 # headless one. Removing it avoids a libGL import failure at eval time.
-RUN uv pip uninstall --python "$VENV/bin/python" opencv-python || true
+#
+# Both distributions share a single cv2/ directory, so uninstalling one DELETES
+# files the other still needs -- cv2 then imports but has no attributes
+# ("module 'cv2' has no attribute 'resize'"). The --reinstall repairs it.
+RUN set -eux; \
+    HEADLESS="$(grep -iE '^opencv-python-headless==' /tmp/lock.txt || true)"; \
+    [ -n "$HEADLESS" ] || HEADLESS=opencv-python-headless==4.13.0.92; \
+    uv pip uninstall --python "$VENV/bin/python" opencv-python || true; \
+    uv pip install --python "$VENV/bin/python" --reinstall "$HEADLESS"; \
+    rm -f /tmp/lock.txt
 
 # Caches point at /workspace at runtime (the network volume), so downloaded
 # datasets and the ResNet18 backbone persist across pods.
@@ -62,15 +71,8 @@ ENV HF_HOME=/workspace/.cache/huggingface \
 
 # Fail the build rather than ship a broken image: assert the CUDA 13 build
 # landed and that PushT renders headless. Neither needs a GPU at build time.
-RUN "$VENV/bin/python" -c "\
-import torch, sys; \
-print('torch', torch.__version__, 'cuda', torch.version.cuda); \
-sys.exit('expected torch 2.11.0') if not torch.__version__.startswith('2.11.0') else None; \
-sys.exit('expected a CUDA 13 build') if not (torch.version.cuda or '').startswith('13') else None" && \
-    "$VENV/bin/python" -c "\
-import gymnasium as gym, gym_pusht; \
-e = gym.make('gym_pusht/PushT-v0', obs_type='pixels_agent_pos', render_mode='rgb_array'); \
-e.reset(seed=0); assert e.render().shape[2] == 3; e.close(); print('headless PushT ok')"
+COPY verify.py /tmp/verify.py
+RUN "$VENV/bin/python" /tmp/verify.py && rm -f /tmp/verify.py
 
 WORKDIR /workspace
 CMD ["/start.sh"]

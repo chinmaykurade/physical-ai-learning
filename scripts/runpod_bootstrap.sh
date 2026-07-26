@@ -180,7 +180,13 @@ if [ "$SKIP_INSTALL" -eq 0 ]; then
   # failure without touching anything LeRobot depends on.
   if "$VENV/bin/python" -c "import importlib.metadata as m; m.version('opencv-python')" 2>/dev/null; then
     "$UV_BIN" pip uninstall --python "$VENV/bin/python" opencv-python
-    ok "removed GUI opencv-python (kept opencv-python-headless)"
+    # Both distributions share one cv2/ directory, so the uninstall deletes
+    # files the headless build still needs -- cv2 then imports but has no
+    # attributes. Reinstalling headless repairs it.
+    HEADLESS="$(grep -iE '^opencv-python-headless==' "$LOCK" || true)"
+    [ -n "$HEADLESS" ] || HEADLESS=opencv-python-headless==4.13.0.92
+    "$UV_BIN" pip install --python "$VENV/bin/python" --reinstall "$HEADLESS"
+    ok "removed GUI opencv-python, repaired opencv-python-headless"
   fi
 
   # torchcodec links against system FFmpeg; without these the video backend
@@ -251,6 +257,19 @@ ok "torch sees the GPU with the expected CUDA 13 build"
 # Exercise the exact headless pygame path that would otherwise crash at the
 # first eval, 2500 steps in. Five seconds here beats ten minutes there.
 "$VENV/bin/python" - <<'PY'
+import sys
+
+# cv2 must be checked by attribute, not import: opencv-python and
+# opencv-python-headless share one cv2/ directory, so uninstalling the GUI
+# build leaves an importable-but-empty module.
+import cv2
+
+if not hasattr(cv2, "resize"):
+    sys.exit(
+        "cv2 imports but has no `resize` -- the opencv-python uninstall gutted "
+        "the shared cv2/ directory. Reinstall opencv-python-headless."
+    )
+
 import gymnasium as gym
 import gym_pusht  # noqa: F401  (registers gym_pusht/PushT-v0)
 
