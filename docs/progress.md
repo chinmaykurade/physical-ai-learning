@@ -18,7 +18,7 @@ it does not duplicate them.
 | **Next [Deep]** | ACT / ALOHA (2304.13705), L-A week 4 |
 | **Pacing track** | Standard (5–6 h/wk build + 3–5 h/wk study) |
 | **Next gate** | L0 exit — sim pipeline proven, tooling live |
-| **Last updated** | 2026-07-26 (Notes columns trimmed to the one-line budget; detail moved to `notes/`) |
+| **Last updated** | 2026-07-26 |
 
 **Status legend:** ☐ not started · ◐ in progress · ☑ done · ⤴ moved to [backlog.md](backlog.md)
 · ✂ cut (recorded, never silent)
@@ -92,7 +92,7 @@ runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to 
 | Weights & Biases quickstart | 0 | Hands-on | ☑ | 2026-07-26 → `neural_networks/wandb_quickstart.py`. D14 |
 | Zotero set up | 0 | Hands-on | ☑ | 2026-07-26. D14 |
 | Keshav — *How to Read a Paper* | 0 | Read | ☑ | 2026-07-26. §5 #1; the protocol for everything after |
-| HF Robotics Course Unit 0 | 0 | — | ☐ | Practice spine |
+| HF Robotics Course Unit 0 | 0 | — | ☑ | 2026-07-26. Practice spine |
 | 3Blue1Brown *Essence of Linear Algebra* (selected) | 1 | — | ☐ | D1; on-demand refresh only |
 | Karpathy *Zero to Hero* #1 — micrograd | 1 | Deep-course | ◐ | Started 2026-07-26 → `neural_networks/micrograd_from_scratch.ipynb`. D4 spine |
 | MuJoCo docs — Overview chapter | 1 | Read | ☐ | D11 |

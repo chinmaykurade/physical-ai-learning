@@ -111,9 +111,9 @@ G7 installment that gate owes, per roadmap §7.
 Roadmap §8 rule 1: **one [Deep] item in flight at a time.** Everything else queues.
 
 - **Current [Deep]:** none — Phase L0 has no [Deep] items. L0 Core is tooling setup
-  (Docker ☑, W&B ☐, Zotero ☑, Keshav ☑), the 3Blue1Brown linear-algebra refresh, Karpathy #1
-  (micrograd — ◐ in flight as a Deep-*course*, which does not occupy the [Deep] slot),
-  HF Robotics Course Unit 0, and MuJoCo Overview + the Menagerie SO-ARM100 model.
+  (Docker ☑, W&B ☑, Zotero ☑, Keshav ☑, HF Course Unit 0 ☑ — all of week 0 closed), the
+  3Blue1Brown linear-algebra refresh, Karpathy #1 (micrograd — ◐ in flight as a Deep-*course*,
+  which does not occupy the [Deep] slot), and MuJoCo Overview + the Menagerie SO-ARM100 model.
 - **Next [Deep]:** **ACT / ALOHA — 2304.13705**, roadmap §5 #5, scheduled **L-A week 4**,
   read *after* the first policy runs.
 - **Queued behind it:** Diffusion Policy (2303.04137, L-B) → *Attention Is All You Need*
