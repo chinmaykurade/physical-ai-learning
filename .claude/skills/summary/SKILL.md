@@ -19,10 +19,16 @@ the updated state.
 | [docs/so101-embodied-ai-project-plan.md](../../../docs/so101-embodied-ai-project-plan.md) | hardware, BOM, phases 0–E, timeline, budget, risks R1–R13 | read-only |
 | [docs/physical-ai-learning-roadmap.md](../../../docs/physical-ai-learning-roadmap.md) | 14 domains, sources, phases L0–F5, reading queue, code-read plan | read-only |
 | `notes/` | weekly log prose, G7 writeups | only when asked |
+| Notion mirror pages | nothing — a read-only copy of the two trackers | **push-only**, see `sync-notion` |
 
 The plan and roadmap are specifications — they get revised at a phase gate by explicit
 request (plan §11 / Phase E), never as a side effect of a status update. progress.md wins
 over CLAUDE.md when they disagree about status.
+
+The Notion mirror owns nothing. It is a convenience copy for reading the board away from the
+workstation, refreshed by the `sync-notion` skill after this one edits a tracker. Never read a
+status from Notion, and never let it inform a briefing — if Notion and the repo disagree, the
+repo is right and the mirror is stale.
 
 ## Briefing
 
@@ -139,8 +145,18 @@ update `Where I am now` to the next phase and its next [Deep], and only then rep
 advance. CLAUDE.md's status paragraph and pins get updated at gates too — offer that edit,
 it is the one time this skill touches CLAUDE.md.
 
+**Sync the Notion mirror.** After any edit to progress.md or backlog.md, push the read-only
+Notion mirror by following the `sync-notion` skill. This runs on *updates only* — a pure
+briefing that changed no file has nothing to sync, so skip it there.
+
+The mirror is push-only (repo → Notion) and Notion is never authoritative: do not read a
+status back from Notion, and never let it inform the briefing. If the Notion connector is
+unavailable — common in headless, cron, or non-interactive runs — note
+"Notion not synced — connector unavailable" in the report and carry on. **A failed sync never
+fails the briefing**; the trackers in git are the deliverable.
+
 **Report back** a compact diff: which rows changed and to what, which backlog rows were
-added, and anything that was flagged rather than edited. Then re-brief if the phase or the
-next actions changed — and end with **the checklist**, per the Briefing section. An update
-that closes or opens a task always ends with the refreshed checklist, even when the rest of
-the briefing is skipped.
+added, whether the Notion mirror was synced, and anything that was flagged rather than
+edited. Then re-brief if the phase or the next actions changed — and end with **the
+checklist**, per the Briefing section. An update that closes or opens a task always ends with
+the refreshed checklist, even when the rest of the briefing is skipped.

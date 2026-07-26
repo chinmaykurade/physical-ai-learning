@@ -115,6 +115,12 @@ model checkpoints move, and much of the work is "how do I set up X". So:
   backlog, stretch watchlist, gate review log, one-in-flight tracker.
 - [env/README.md](env/README.md) — environment path and regeneration. `notes/` — weekly
   logs and G7 writeups.
+- **Notion mirror** — `docs/progress.md` and `docs/backlog.md` are mirrored to a
+  [Notion parent page](https://app.notion.com/p/3a9c6576670181b2a66deb8035f097d2) for reading
+  the board away from the workstation. The mirror is **read-only and owns nothing**: sync is
+  push-only (repo → Notion) via the `sync-notion` skill, which `/summary` runs after any
+  tracker edit. If Notion and the repo disagree, the repo is right. Never edit status in
+  Notion — it is overwritten on the next sync.
 
 ## Maintaining this file
 
