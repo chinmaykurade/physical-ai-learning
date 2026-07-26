@@ -1,0 +1,62 @@
+# --- Python environments -----------------------------------------------
+# The project venv lives OUTSIDE this repo at /home/chinmay/lerobot-env and is
+# never committed. env/lerobot-env.lock.txt is its only record here.
+.venv/
+venv/
+env/bin/
+env/lib/
+env/lib64/
+env/include/
+env/share/
+env/pyvenv.cfg
+*.egg-info/
+.python-version
+
+# --- Python build/runtime cruft ----------------------------------------
+__pycache__/
+*.py[cod]
+*.so
+build/
+dist/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Model weights, checkpoints, experiment output ---------------------
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.engine
+*.plan
+checkpoints/
+outputs/
+runs/
+wandb/
+
+# --- Datasets & recordings ---------------------------------------------
+data/
+datasets/
+*.mp4
+*.mkv
+*.parquet
+*.arrow
+
+# --- Secrets & local config --------------------------------------------
+.env
+.env.*
+!.env.example
+*.key
+
+# --- Claude Code local state -------------------------------------------
+.claude/settings.local.json
+.claude/settings.local.json.tmp.*
+
+# --- OS / editor --------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
