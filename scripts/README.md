@@ -4,7 +4,8 @@ Automation for running LeRobot training jobs on a rented GPU. Two scripts:
 
 | Script | Job |
 |---|---|
-| `runpod_bootstrap.sh` | Builds the pinned environment on the pod's network volume. Idempotent — safe and fast to re-run. |
+| `runpod_bootstrap.sh` | Prepares the environment on the pod. Idempotent — safe and fast to re-run. |
+| `build_image.sh` | Builds and pushes the prebuilt image (see [Prebuilt image](#prebuilt-image-faster-cold-starts)). |
 | `train_pusht_toy.sh` | The canonical pusht Diffusion-Policy job. Runs unchanged on the workstation *and* on a pod. Optional `--push` uploads weights to the HF Hub. |
 
 The intended loop is: **ssh in → `runpod_bootstrap.sh` → `train_pusht_toy.sh` → stop the pod.**
@@ -125,6 +126,45 @@ bash scripts/train_pusht_toy.sh
 ```
 
 The script also tees to `/workspace/outputs/logs/<job-name>.log` either way.
+
+---
+
+## Prebuilt image (faster cold starts)
+
+The slow part of a first boot is not the repo clone — it is downloading the
+**~4.7 GB** torch + CUDA 13 stack from PyPI (`nvidia/cu13` alone is 1.8 GB, torch 1.2 GB,
+triton 0.7 GB). [`docker/Dockerfile`](../docker/Dockerfile) bakes that into an image so a
+fresh pod pulls it from the registry instead — parallel, resumable, and edge-cached, which is
+substantially faster than a serial pip resolve.
+
+```bash
+bash scripts/build_image.sh <dockerhub-user>      # ~10-15 min once, then push
+```
+
+Then create the template once: **Templates → New Template**, container image
+`<dockerhub-user>/lerobot-so101:0.6.0`, volume mount path `/workspace`, and the same two env
+vars. Deploy from that template (still with the CUDA 13.x filter).
+
+The bootstrap detects the baked venv at `/opt/lerobot-env` and skips installing entirely —
+it just verifies and writes `env.sh`. Same command either way:
+
+```bash
+bash scripts/runpod_bootstrap.sh    # prebaked: seconds. volume-built: ~6-8 min.
+```
+
+**Cost: nothing.** RunPod templates are free, and Docker Hub allows unlimited *public*
+repositories on the free tier (public also means RunPod needs no registry credentials). You
+pay only for GPU time and storage as before.
+
+**Caveat.** This does not make the gigabytes vanish — it moves them from boot-time to
+build-time and swaps a slow protocol for a fast one. Expect a cold pull of a few minutes
+rather than ~6–8 minutes of installing. The bigger wins are that the install becomes
+*deterministic* (it either worked at build time or the build failed) and that the image
+build asserts torch 2.11.0 + CUDA 13 and a headless PushT render, so a broken environment
+cannot ship.
+
+Note the venv is baked at `/opt/lerobot-env`, **not** `/workspace` — the network volume is
+mounted over `/workspace` at runtime and would hide anything the image put there.
 
 ---
 

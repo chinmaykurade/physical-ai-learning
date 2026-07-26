@@ -48,7 +48,14 @@ LOCAL_VENV=/home/chinmay/lerobot-env
 if [ -f "$POD_ENV" ]; then
   # shellcheck disable=SC1090
   . "$POD_ENV"
-  PYBIN=/workspace/lerobot-env/bin
+  # A prebuilt image bakes the venv at /opt/lerobot-env; a volume-built one
+  # lives at /workspace/lerobot-env. env.sh puts the right one on PATH, but
+  # resolve it explicitly so the script does not depend on PATH ordering.
+  if [ -x /opt/lerobot-env/bin/lerobot-train ]; then
+    PYBIN=/opt/lerobot-env/bin
+  else
+    PYBIN=/workspace/lerobot-env/bin
+  fi
   OUT_ROOT=/workspace/outputs
   WHERE="runpod"
 elif [ -x "$LOCAL_VENV/bin/lerobot-train" ]; then

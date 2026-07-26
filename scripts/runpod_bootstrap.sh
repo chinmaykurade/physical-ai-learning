@@ -11,7 +11,17 @@
 set -euo pipefail
 
 WORKSPACE=/workspace
-VENV="$WORKSPACE/lerobot-env"
+# A prebuilt image (see docker/Dockerfile) bakes the venv at /opt/lerobot-env,
+# which makes the ~4.7 GB torch+CUDA install a registry pull instead of a PyPI
+# download. Prefer it when present; otherwise build on the volume.
+BAKED_VENV=/opt/lerobot-env
+if [ -x "$BAKED_VENV/bin/python" ]; then
+  VENV="$BAKED_VENV"
+  PREBAKED=1
+else
+  VENV="$WORKSPACE/lerobot-env"
+  PREBAKED=0
+fi
 UV_BIN="$WORKSPACE/.local/bin/uv"
 ENV_SH="$VENV/env.sh"
 STAMP="$VENV/.bootstrap-complete"
@@ -105,12 +115,19 @@ ok "$((AVAIL_KB/1024/1024)) GB free on $WORKSPACE"
 # correctly forces a rebuild instead of silently running a stale environment.
 LOCK_HASH=$(sha256sum "$LOCK" | cut -d' ' -f1)
 
-if [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$LOCK_HASH" ]; then
+if [ "$PREBAKED" -eq 1 ]; then
+  say "Using the prebaked environment at $BAKED_VENV"
+  ok "no install needed -- torch and the CUDA stack ship in the image"
+  SKIP_INSTALL=1
+elif [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$LOCK_HASH" ]; then
   say "Environment already provisioned -- skipping install"
   ok "lock hash matches $STAMP"
   SKIP_INSTALL=1
 else
   [ -f "$STAMP" ] && say "Lock file changed since last bootstrap -- reinstalling"
+  say "Building the environment on the volume (~4.7 GB of torch + CUDA wheels)"
+  printf '    This is the slow path. A prebuilt image makes it a registry pull\n'
+  printf '    instead -- see docker/Dockerfile and scripts/build_image.sh.\n'
   SKIP_INSTALL=0
 fi
 
@@ -123,7 +140,12 @@ if [ "$SKIP_INSTALL" -eq 0 ]; then
     curl -LsSf https://astral.sh/uv/install.sh | sh
   fi
   export PATH="$WORKSPACE/.local/bin:$PATH"
+  # Cache on the volume: the cu130 torch + CUDA wheels are ~4.7 GB, so a
+  # second pod on this volume reuses them instead of re-downloading.
   export UV_CACHE_DIR="$WORKSPACE/.cache/uv"
+  # Link instead of copying out of the cache where possible (same filesystem),
+  # which avoids a second 4.7 GB write into the venv.
+  export UV_LINK_MODE=${UV_LINK_MODE:-hardlink}
   ok "uv $("$UV_BIN" --version | awk '{print $2}')"
 
   [ -d "$VENV" ] || "$UV_BIN" venv --python 3.12 "$VENV"
@@ -245,7 +267,7 @@ ok "headless PushT renders"
 
 # Only stamp after every check has passed -- a failed bootstrap must never
 # mark itself complete, or the next run would skip straight past the problem.
-echo "$LOCK_HASH" > "$STAMP"
+[ "$PREBAKED" -eq 1 ] || echo "$LOCK_HASH" > "$STAMP"
 
 N_PKGS=$("$UV_BIN" pip freeze --python "$VENV/bin/python" 2>/dev/null | wc -l)
 say "Bootstrap complete -- $N_PKGS packages"
