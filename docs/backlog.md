@@ -43,12 +43,12 @@ Reviewed at every phase gate. Live task status and the current phase live in
 
 ## Active backlog
 
-Empty by design. The first entries arrive at the **L0 gate** — nothing is deferred before a
-gate has judged it deferred.
+First entries added at the **L0 gate**, 2026-08-05.
 
 | Item | Source/ID | Tag | Deferred from | Target | Date added | Notes |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| MuJoCo docs — Overview chapter | roadmap §4 wk 1 | [Read] | L0 | L-A | 2026-08-05 | D11 spine; pairs with the Menagerie item below |
+| Load the Menagerie SO-ARM100 model and poke it | roadmap §4 wk 1 | [Hands-on] | L0 | L-A | 2026-08-05 | **L0 study exit criterion, unmet at gate.** Carried into L-A, not to F1 — it gates nothing in the build but is the sim spine for L-D |
 
 ---
 
@@ -81,6 +81,7 @@ Per rule 7, every ✂ names the residual risk. Reviewed at each gate alongside t
 | Item | Plan line | Status | Risk it mitigated | Phase | Date | Residual risk / what covers it now |
 |---|---|---|---|---|---|---|
 | Feetech STS3215 spare gear sets ×2 | plan §6 BOM-C (`plan.md:91`) | ✂ cut | R2 — servo DOA or stripped gear | 0 | 2026-07-26 | No standalone 1:345 SKU found at Robu, AliExpress or the Feetech resellers; TheRobotStudio SO-101 README documents no gear-replacement path. **Covered by the 13th spare servo in BOM-A** — a stripped gear now costs a whole servo instead of a gear set, and the spare is single-use |
+| Run simulated teleoperation | plan Phase 0 exit criterion | ⤴ deferred → L-D | Proving the control loop with no hardware at risk | 0 | 2026-08-05 | Real teleop on the follower ran first (`keyboard_teleop.py`), so the pipeline is proven — but **on hardware, which is what the criterion existed to avoid**. Residual risk: no zero-cost sandbox for testing a policy or a control change before it drives 30 kg·cm servos. Partly covered by the latched-overload handling in `keyboard_teleop.py` and a neutral-pose start; fully covered when the L-D MuJoCo/ManiSkill envs stand up |
 
 **Reversed, kept for the record:** inline fuse + kill-switch (plan §6 BOM-C, `plan.md:94`) was
 cut on 2026-07-26 on the grounds that the PSU would be wired directly to the motor driver, and
@@ -97,7 +98,7 @@ G7 installment that gate owes, per roadmap §7.
 
 | Date | Gate | Core complete? | Items added | Items cleared | Artifact shipped |
 |---|---|---|---|---|---|
-| | L0 exit | | | | — (no G7 due; first artifact is at L-A) |
+| 2026-08-05 | L0 exit | **No** — MuJoCo Overview + Menagerie SO-ARM100 (study exit criterion) unmet | 3 (MuJoCo Overview, Menagerie model, sim teleop) | 0 | — (no G7 due; first artifact is at L-A) |
 | | L-A exit | | | | G7 #1 — *"From kit to policy: 50 demos to 80% autonomous"* |
 | | L-B exit | | | | G7 #2 — *"How many demos is enough?"* (scaling curve + ablation + published dataset) |
 | | L-C exit | | | | G7 #3 — *"ACT vs SmolVLA vs a 3B VLA on the same desk"* |
@@ -110,10 +111,9 @@ G7 installment that gate owes, per roadmap §7.
 
 Roadmap §8 rule 1: **one [Deep] item in flight at a time.** Everything else queues.
 
-- **Current [Deep]:** none — Phase L0 has no [Deep] items. L0 Core is tooling setup
-  (Docker ☑, W&B ☑, Zotero ☑, Keshav ☑, HF Course Unit 0 ☑ — all of week 0 closed), the
-  3Blue1Brown linear-algebra refresh, Karpathy #1 (micrograd — ◐ in flight as a Deep-*course*,
-  which does not occupy the [Deep] slot), and MuJoCo Overview + the Menagerie SO-ARM100 model.
+- **Current [Deep]:** none — the slot is open. L0 closed 2026-08-05 with no [Deep] items
+  (Karpathy #1 micrograd ☑ as a Deep-*course*, which never occupied the slot). L-A's [Deep]
+  is ACT / ALOHA, gated on the first policy run, so the slot stays open until then.
 - **Next [Deep]:** **ACT / ALOHA — 2304.13705**, roadmap §5 #5, scheduled **L-A week 4**,
   read *after* the first policy runs.
 - **Queued behind it:** Diffusion Policy (2303.04137, L-B) → *Attention Is All You Need*
