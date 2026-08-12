@@ -19,10 +19,16 @@ the updated state.
 | [docs/so101-embodied-ai-project-plan.md](../../../docs/so101-embodied-ai-project-plan.md) | hardware, BOM, phases 0–E, timeline, budget, risks R1–R13 | read-only |
 | [docs/physical-ai-learning-roadmap.md](../../../docs/physical-ai-learning-roadmap.md) | 14 domains, sources, phases L0–F5, reading queue, code-read plan | read-only |
 | `notes/` | weekly log prose, G7 writeups | only when asked |
+| Notion mirror pages | nothing — a read-only copy of the two trackers | **push-only**, see `sync-notion` |
 
 The plan and roadmap are specifications — they get revised at a phase gate by explicit
 request (plan §11 / Phase E), never as a side effect of a status update. progress.md wins
 over CLAUDE.md when they disagree about status.
+
+The Notion mirror owns nothing. It is a convenience copy for reading the board away from the
+workstation, refreshed by the `sync-notion` skill after this one edits a tracker. Never read a
+status from Notion, and never let it inform a briefing — if Notion and the repo disagree, the
+repo is right and the mirror is stale.
 
 ## Briefing
 
@@ -97,7 +103,8 @@ guess at a row that would change a goal or a gate.
 **Then apply, per the status legend:**
 
 - **☑ done** — flip the status. Add a short evidence note in the Notes column when there is
-  one (a version, a measurement, a checkpoint path). Prose belongs in `notes/`, not here.
+  one (a version, a measurement, a checkpoint path). See **Notes column budget** below —
+  prose belongs in `notes/`, not here.
 - **◐ in progress** — flip on "started". If the item is [Deep], it must become the *Current
   [Deep] in flight* in both progress.md and the backlog's one-in-flight tracker; if another
   [Deep] is already in flight, say so and ask which one holds the slot before editing.
@@ -117,6 +124,32 @@ promises and the project's first rule is that nothing is silently dropped.
 **Depth tags are never edited in place.** A [Deep]→[Read] demotion is written as a demotion:
 the Tag column becomes `[Read] (was [Deep])` and the Notes column gets
 `[Deep]→[Read] on YYYY-MM-DD, reason`.
+
+### Notes column budget
+
+progress.md is a status board, not a log. **A Notes cell is one line — roughly 15 words, and
+never more than two clauses.** It carries only what you cannot recompute: a date, a version, a
+measurement, an identifier, a path, a risk ID, an exit-criterion marker.
+
+What belongs in a Notes cell:
+
+- `2026-07-26. torch 2.11.0+cu130, CUDA 13.0, sm_86, bf16 native`
+- `Exit criterion met 2026-07-26. See notes/2026-07-26-week0-runpod-cloud-path.md`
+- `Build exit criterion` · `Risk R3` · `Ordered 2026-07-26, verify C018 on arrival (R1)`
+
+What does **not**, no matter how hard-won:
+
+- *Why* something failed, the error text, the diagnosis, the workaround — that is a `notes/`
+  entry. Link to it instead.
+- Narrative ("found the hard way", "two constraints", "cut and reinstated same day").
+- Anything already recorded in `notes/`, the plan, the roadmap, or git history. A tracker cell
+  that restates a notes file is duplication that will drift out of sync.
+
+**When a completion has real substance behind it, the substance goes to `notes/` and the cell
+gets a pointer.** If no notes file exists yet for it, say so in the report and offer to write
+one — do not park the prose in the tracker as a substitute. When trimming an over-long cell,
+verify the detail survives in `notes/` **before** cutting it; if it does not, move it, don't
+delete it.
 
 **Propagate.** After any status edit, check whether these need to move too:
 
@@ -139,8 +172,18 @@ update `Where I am now` to the next phase and its next [Deep], and only then rep
 advance. CLAUDE.md's status paragraph and pins get updated at gates too — offer that edit,
 it is the one time this skill touches CLAUDE.md.
 
+**Sync the Notion mirror.** After any edit to progress.md or backlog.md, push the read-only
+Notion mirror by following the `sync-notion` skill. This runs on *updates only* — a pure
+briefing that changed no file has nothing to sync, so skip it there.
+
+The mirror is push-only (repo → Notion) and Notion is never authoritative: do not read a
+status back from Notion, and never let it inform the briefing. If the Notion connector is
+unavailable — common in headless, cron, or non-interactive runs — note
+"Notion not synced — connector unavailable" in the report and carry on. **A failed sync never
+fails the briefing**; the trackers in git are the deliverable.
+
 **Report back** a compact diff: which rows changed and to what, which backlog rows were
-added, and anything that was flagged rather than edited. Then re-brief if the phase or the
-next actions changed — and end with **the checklist**, per the Briefing section. An update
-that closes or opens a task always ends with the refreshed checklist, even when the rest of
-the briefing is skipped.
+added, whether the Notion mirror was synced, and anything that was flagged rather than
+edited. Then re-brief if the phase or the next actions changed — and end with **the
+checklist**, per the Briefing section. An update that closes or opens a task always ends with
+the refreshed checklist, even when the rest of the briefing is skipped.

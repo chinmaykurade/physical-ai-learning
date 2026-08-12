@@ -12,13 +12,13 @@ it does not duplicate them.
 
 | | |
 |---|---|
-| **Current build phase** | **Phase 0 — Procurement & Preparation** (weeks 0–1) |
-| **Current study phase** | **L0** (weeks 0–1) |
-| **Current [Deep] in flight** | none — L0 has no [Deep] items. Deep-*course* underway: Karpathy #1 (micrograd) |
+| **Current build phase** | **Phase A — Build & First Autonomous Policy** (weeks 1–4) |
+| **Current study phase** | **L-A** (weeks 1–4) |
+| **Current [Deep] in flight** | none — next is ACT / ALOHA, gated on the first policy run |
 | **Next [Deep]** | ACT / ALOHA (2304.13705), L-A week 4 |
 | **Pacing track** | Standard (5–6 h/wk build + 3–5 h/wk study) |
-| **Next gate** | L0 exit — sim pipeline proven, tooling live |
-| **Last updated** | 2026-07-26 |
+| **Next gate** | L-A exit — G1 and G2 met, G7 #1 shipped |
+| **Last updated** | 2026-08-05 |
 
 **Status legend:** ☐ not started · ◐ in progress · ☑ done · ⤴ moved to [backlog.md](backlog.md)
 · ✂ cut (recorded, never silent)
@@ -67,22 +67,22 @@ runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to 
 |---|---|---|
 | Order BOM-A: 13× STS3215-C018, 2× Waveshare adapter, 12 V 5 A PSU, workspace webcam, wrist cam, fasteners | ☑ | Ordered 2026-07-26. Verify C018 suffix on arrival (R1) |
 | Order BOM-B: Bambu Lab P2S (Combo or standalone) + PLA ×3 kg, PETG 1 kg, TPU 0.5–1 kg, spare nozzle | ☑ | Ordered 2026-07-26 (R13 watch until it ships) |
-| Order BOM-C recommended minimum: gamepad, inline fuse + kill-switch, spare gear sets ×2, calipers | ☑ | Ordered 2026-07-26. Gamepad — existing PS5 controller. Calipers — ordered. R8 kit — Littelfuse ATOF 287 fuses `0287005.PXCN` (5 A, primary) + `028707.5PXCN` (7.5 A, step-up), inline ATO blade fuse holder, Daier `KCD3-101N-R` illuminated rocker (12 V lamp, SPST, 20 A/125 VAC). Fuse+switch were cut and reinstated same day — a fuse sits in series between PSU and driver, so direct wiring does not displace it. Spare gear sets — **✂ cut 2026-07-26**: no standalone 1:345 SKU found at Robu/AliExpress/Feetech resellers; the 13th spare servo covers R2 |
-| Receive and inspect all parts | ☐ | Build exit criterion |
-| Calibrate the printer | ☐ | Risk R3 |
-| Print all follower parts | ☐ | Print-service fallback if printer slips (R13) |
-| Print all leader parts | ☐ | |
+| Order BOM-C recommended minimum: gamepad, inline fuse + kill-switch, spare gear sets ×2, calipers | ☑ | Ordered 2026-07-26; gamepad = existing PS5 controller. Spare gear sets **✂ cut 2026-07-26**, no SKU exists (see [backlog.md](backlog.md)). R8 part numbers in [notes](../notes/2026-07-26-week0-runpod-cloud-path.md) |
+| Receive and inspect all parts | ☑ | Build exit criterion met 2026-08-05 |
+| Calibrate the printer | ☑ | 2026-08-05. Risk R3 |
+| Print all follower parts | ☑ | 2026-08-05 |
+| Print all leader parts | ☑ | 2026-08-05 |
 | Print the assembly-alignment jig | ☐ | |
 | Install Ubuntu native dual-boot | ☑ | Native Linux confirmed, kernel 7.0.0-28-generic. Never WSL2 (R5) |
 | Create the Python environment | ☑ | uv venv at `/home/chinmay/lerobot-env`, Python 3.12.3 |
 | Install LeRobot + Feetech extras, pinned | ☑ | `lerobot==0.6.0`; 18 `lerobot-*` CLI entry points present |
 | Verify GPU path (torch/CUDA/bf16) | ☑ | torch 2.11.0+cu130, CUDA 13.0, sm_86, bf16 native |
-| Capture the env lock file | ☑ | `env/lerobot-env.lock.txt`. Regenerated 2026-07-26: 116 → 154 packages, **38 insertions / 0 deletions** — pure capture of already-installed drift (wandb, matplotlib, the ipykernel stack), no version changed, so not a roadmap §8 rule 2 pin change. The old lock was missing `wandb`, which the training command needs |
-| Run simulated teleoperation | ☐ | Build exit criterion |
-| Run a toy training job end to end | ☑ | **Exit criterion met 2026-07-26.** Diffusion Policy on `lerobot/pusht`, 5000 steps, bs 64, ~18 min on the 3080. Checkpoints at `outputs/train/pusht_diffusion_toy/checkpoints/{002500,005000,last}`; W&B project `so101-embodied-ai`. Needed `--eval.use_async_envs=false` — LeRobot 0.6.0 sets `context="forkserver"` for AsyncVectorEnv without preloading `gym_pusht`, so workers hit `NamespaceNotFound` |
-| Set up Hugging Face account (datasets + hub) | ☑ | 2026-07-26. Account `chinmaykurade`; CLI login verified via `whoami`. **Model push verified end to end 2026-07-26**, both locally and from a RunPod pod: 1.05 GB (`model.safetensors` + config + both processors + generated card), ~2 min upload. Live artifact: `chinmaykurade/pusht_diffusion_runpod_01`. Local auth is a cached `hf auth login` token; the pod needs `HF_TOKEN` (write scope) as an env var. Plan §5.2 |
-| Set up RunPod (or equivalent) account, ₹2,000–3,000 budget | ☑ | Account created 2026-07-26. **Cloud path proven end to end 2026-07-26**: pod → prebaked env → training → W&B → Hub push. Diffusion Policy on `lerobot/pusht`, 2000 steps, bs 64; W&B project `so101-embodied-ai`; weights at `chinmaykurade/pusht_diffusion_runpod_01` (private, 1.05 GB). Automation in `scripts/` + `docker/`; template settings in `docker/RUNPOD_TEMPLATE.md`. Two constraints found the hard way: **deploy must set Additional filters → CUDA Versions → 13.x** (an unfiltered 4090 landed on driver 570.211.01; `torch==2.11.0` needs the CUDA 13 stack and driver ≥580), and the prebuilt image must start `FROM runpod/base:*-cuda1300-*`, since `runpod/pytorch` adds a second unused torch. Phase-C A100 spend still ahead |
-| Set up the workspace: rigid desk, clamped camera, fixed lighting, taped positions | ☐ | Plan §5.4 — this is risk R4 prevention |
+| Capture the env lock file | ☑ | `env/lerobot-env.lock.txt`. Regenerated 2026-07-26: 116 → 154 pkgs, no version changed (not a rule-2 pin change) |
+| Run simulated teleoperation | ⤴ | Deferred to L-D 2026-08-05 — real teleop ran first. See [backlog.md](backlog.md) |
+| Run a toy training job end to end | ☑ | **Exit criterion met 2026-07-26.** DP on `lerobot/pusht`, 5000 steps, ~18 min on the 3080 → `outputs/train/pusht_diffusion_toy/`. [notes](../notes/2026-07-26-week0-runpod-cloud-path.md) |
+| Set up HF account (datasets + hub) | ☑ | 2026-07-26, account `chinmaykurade`. Model push verified local + pod → `chinmaykurade/pusht_diffusion_runpod_01`. Plan §5.2 |
+| Set up RunPod (or equivalent) account, ₹2,000–3,000 budget | ☑ | Account 2026-07-26. **Cloud path proven end to end**; automation in `scripts/` + `docker/`, see `docker/RUNPOD_TEMPLATE.md` and [notes](../notes/2026-07-26-week0-runpod-cloud-path.md). Phase-C A100 spend still ahead |
+| Set up the workspace: rigid desk, clamped camera, fixed lighting, taped positions | ☑ | 2026-08-05, webcam mount printed and clamped. Plan §5.4, risk R4 |
 
 ### Study — Core
 
@@ -92,9 +92,9 @@ runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to 
 | Weights & Biases quickstart | 0 | Hands-on | ☑ | 2026-07-26 → `neural_networks/wandb_quickstart.py`. D14 |
 | Zotero set up | 0 | Hands-on | ☑ | 2026-07-26. D14 |
 | Keshav — *How to Read a Paper* | 0 | Read | ☑ | 2026-07-26. §5 #1; the protocol for everything after |
-| HF Robotics Course Unit 0 | 0 | — | ☐ | Practice spine |
+| HF Robotics Course Unit 0 | 0 | — | ☑ | 2026-07-26. Practice spine |
 | 3Blue1Brown *Essence of Linear Algebra* (selected) | 1 | — | ☐ | D1; on-demand refresh only |
-| Karpathy *Zero to Hero* #1 — micrograd | 1 | Deep-course | ◐ | Started 2026-07-26 → `neural_networks/micrograd_from_scratch.ipynb`. D4 spine |
+| Karpathy *Zero to Hero* #1 — micrograd | 1 | Deep-course | ☑ | 2026-08-05 → `neural_networks/micrograd_from_scratch.ipynb`. D4 spine |
 | MuJoCo docs — Overview chapter | 1 | Read | ☐ | D11 |
 | Load the Menagerie SO-ARM100 model and poke it | 1 | Hands-on | ☐ | Study exit criterion |
 
@@ -106,8 +106,11 @@ runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to 
 
 ### L0 gate
 
-☐ Core done? ☐ Backlog groomed? ☐ Artifact — none due (G7 starts at L-A). Record in
+☐ Core done? ☑ Backlog groomed? ☑ Artifact — none due (G7 starts at L-A). Record in
 [backlog.md § Gate review log](backlog.md#gate-review-log).
+
+Gate passed 2026-08-05 with **Core incomplete**: MuJoCo Overview and the Menagerie
+SO-ARM100 model (the study exit criterion) carry into L-A. Sim teleop ⤴ to L-D.
 
 ---
 
@@ -119,12 +122,12 @@ runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to 
 
 | Task | Status | Notes |
 |---|---|---|
-| Set every servo's bus ID **before** assembly | ☐ | 12 servos; do not skip the ordering |
+| Set every servo's bus ID **before** assembly | ☑ | Follower set 2026-08-05; leader IDs still to do |
 | Label every cable | ☐ | Bus hygiene |
-| Assemble the follower arm | ☐ | |
-| Assemble the leader arm | ☐ | |
-| Wire each arm to its adapter; fused 12 V rail + kill switch | ☐ | Risk R8 — never hot-plug the servo chain |
-| Run joint calibration on both arms | ☐ | Deliverable: calibration record |
+| Assemble the follower arm | ☑ | 2026-08-05 |
+| Assemble the leader arm | ☐ | Parts printed 2026-08-05 |
+| Wire each arm to its adapter; fused 12 V rail + kill switch | ◐ | Follower wired 2026-08-05 on `/dev/ttyACM1`; leader pending. Risk R8 |
+| Run joint calibration on both arms | ◐ | Follower calibrated 2026-08-05; leader pending. Deliverable: calibration record |
 | Practice teleoperation to fluency; 30-min fault-free session | ☐ | **G1** |
 | Define the canonical task (cube → bowl) | ☐ | |
 | Record ~50 episodes, 10–15 s each | ☐ | Deliverable: 50-episode dataset |
@@ -476,3 +479,7 @@ No Stretch items — L-E is all Core.
 - ✂ (cut) requires a dated reason in the Notes column. Nothing disappears silently.
 - Update **Where I am now** at every phase gate — current phase, [Deep] in flight, next gate.
 - Weekly log prose goes in `notes/`, not here. This file holds status only.
+- **Notes cells are one line — ~15 words, two clauses at most.** They carry only what cannot be
+  recomputed: a date, a version, a measurement, an identifier, a path, a risk ID, an
+  exit-criterion marker. Reasons, error text, diagnoses and narrative go to `notes/`; the cell
+  gets a pointer to the file. A cell that restates a notes file is duplication that will drift.
