@@ -4,6 +4,7 @@
 **Companion to:** *SO-101 Robot Arm & Embodied AI Learning Rig — Project Plan v1.1*
 **Status:** Approved through Stage 3 (concepts → sources → plan)
 **Goal:** demonstrable, career-relevant Physical AI / robot-learning engineering skill, built on top of the SO-101 rig.
+**Schedule re-baselined 20 September 2026:** a ~5-week vacation (2026-08-16 → 2026-09-19) paused both tracks mid-L-A. Week 3 onward shifts **+5 weeks**; week numbers here are unchanged, and §4 now carries the calendar each maps to. Role-ready target: **end of May 2027**.
 
 ---
 
@@ -29,11 +30,11 @@ Rules of engagement: refresh math **on demand only** (no standalone math phase);
 
 Honest accounting first. The full inventory below is roughly **330–370 hours of study**. The project plan budgets 8–10 h/week total with ~3–4 h/week of that as study during the build. That is enough to cover the *core* study items during Phases 0–E, but not the whole inventory — which is why Phase F exists.
 
-| Period | Calendar | Build load | Study load | Study focus |
-|---|---|---|---|---|
-| Phases L0–L-E | Weeks 0–16 | 5–6 h/wk | 3–5 h/wk (~60–80 h total) | Core items only — everything needed to *understand what you are building as you build it* |
-| Phase F | Months 5–9 (~20 weeks) | none (Stage-2 gate deferred or parallel) | 8–10 h/wk (~160–200 h) | Depth passes, full courses, perception, deployment, the three modules, portfolio, interview prep |
-| Buffer | Months 10–12 | — | as needed | Spillover, Stage-2 XLeRobot build if go, job search |
+| Period | Weeks | Calendar (re-baselined) | Build load | Study load | Study focus |
+|---|---|---|---|---|---|
+| Phases L0–L-E | 0–16 | 2026-07-26 → 2026-12-26 | 5–6 h/wk | 3–5 h/wk (~60–80 h total) | Core items only — everything needed to *understand what you are building as you build it* |
+| Phase F | 17–38 | 2026-12-27 → 2027-05-29 | none (Stage-2 gate deferred or parallel) | 8–10 h/wk (~160–200 h) | Depth passes, full courses, perception, deployment, the three modules, portfolio, interview prep |
+| Buffer | — | 2027-06 → 2027-08 | — | as needed | Spillover, Stage-2 XLeRobot build if go, job search |
 
 **Two pacing tracks.** *Standard*: as tabled above — role-ready in ~9–10 months, 12 with buffer. *Intensive*: 12–14 h/week combined from the start compresses Phase F into months 4–7 — role-ready in ~7–8 months. The schedule in §4 is written for Standard; Intensive simply pulls Phase-F blocks forward.
 
@@ -169,26 +170,26 @@ Study phases are named after the build phases they accompany (L0 pairs with buil
 
 **Standing weekly rhythm (all phases):** Sunday — pick the week's one [Deep] item and one shippable output; midweek — papers/lectures ride along with prints, shipping waits, and training runs (the plan's parallelization rule); Saturday — 30 min log: what was learned, what moved to backlog. One public artifact per phase minimum (G7).
 
-### Phase L0 — Weeks 0–1 · with build Phase 0 (procurement & prep)
+### Phase L0 — Weeks 0–1 · 2026-07-26 → 2026-08-08 · with build Phase 0 (procurement & prep)
 
-| Wk | Build context | Study — Core | ~h |
-|---|---|---|---|
-| 0 | Orders placed day 1; printing begins | Docker getting-started + W&B quickstart; Zotero set up + Keshav *How to Read a Paper*; HF Robotics Course Unit 0 | 3 |
-| 1 | Ubuntu + LeRobot installed; sim teleop + toy training verified | 3Blue1Brown linear-algebra refresh (selected); Karpathy #1 (micrograd); MuJoCo docs Overview + load the Menagerie SO-ARM100 model and poke it | 5–6 |
+| Wk | Week of | Build context | Study — Core | ~h |
+|---|---|---|---|---|
+| 0 | 2026-07-26 | Orders placed day 1; printing begins | Docker getting-started + W&B quickstart; Zotero set up + Keshav *How to Read a Paper*; HF Robotics Course Unit 0 | 3 |
+| 1 | 2026-08-02 | Ubuntu + LeRobot installed; sim teleop + toy training verified | 3Blue1Brown linear-algebra refresh (selected); Karpathy #1 (micrograd); MuJoCo docs Overview + load the Menagerie SO-ARM100 model and poke it | 5–6 |
 
 **Exit:** experiment tooling live; you have run a MuJoCo model of your own arm before the real one exists. **Stretch:** MuJoCo Modeling chapter.
 
-### Phase L-A — Weeks 1–4 · with build Phase A (build & first ACT policy)
+### Phase L-A — Weeks 1–4 · 2026-08-02 → **2026-10-03** · with build Phase A (build & first ACT policy)
 
-| Wk | Build context | Study — Core | ~h |
-|---|---|---|---|
-| 1–2 | Servo IDs, assembly, wiring, calibration | HF Robotics Course classical-foundations units; Modern Robotics Ch. 2–3 (videos + notes) — config space, rotations, SE(3) | 6–7 |
-| 3 | Teleop fluency; record ~50 episodes | HF Robotics Course imitation-learning unit; DAgger [Read]; Karpathy #2–3 (makemore/backprop fluency) | 4–5 |
-| 4 | ACT trained overnight; 10-trial eval (G1, G2) | *After the policy runs:* Weng VAE blog + CVAE [Skim] as pre-reads, then **ACT [Deep]**; LeRobot ACT code-read part 1 (§6 list) | 4–5 |
+| Wk | Week of | Build context | Study — Core | ~h |
+|---|---|---|---|---|
+| 1–2 | 2026-08-02 | Servo IDs, assembly, wiring, calibration | HF Robotics Course classical-foundations units; Modern Robotics Ch. 2–3 (videos + notes) — config space, rotations, SE(3) | 6–7 |
+| 3 | **2026-09-20** | Teleop fluency; record ~50 episodes | HF Robotics Course imitation-learning unit; DAgger [Read]; Karpathy #2–3 (makemore/backprop fluency) | 4–5 |
+| 4 | 2026-09-27 | ACT trained overnight; 10-trial eval (G1, G2) | *After the policy runs:* Weng VAE blog + CVAE [Skim] as pre-reads, then **ACT [Deep]**; LeRobot ACT code-read part 1 (§6 list) | 4–5 |
 
 **Exit:** you can explain every block of the ACT architecture against your own training curves. **Stretch:** MR Ch. 4 (FK) + NumPy FK for the SO-101.
 
-### Phase L-B — Weeks 4–6 · with build Phase B (data-centric experiments)
+### Phase L-B — Weeks 4–6 · 2026-09-27 → **2026-10-17** · with build Phase B (data-centric experiments)
 
 | Wk | Build context | Study — Core | ~h |
 |---|---|---|---|
@@ -197,7 +198,7 @@ Study phases are named after the build phases they accompany (L0 pairs with buil
 
 **Exit:** scaling curve and ablation exist *and* you can say why DP handles multimodal actions where naive BC can't. **Stretch:** full Nayar image-formation playlist → F2.
 
-### Phase L-C — Weeks 6–9 (allow spill to 10) · with build Phase C (VLAs)
+### Phase L-C — Weeks 6–9 (allow spill to 10) · 2026-10-11 → **2026-11-07** (spill to 11-14) · with build Phase C (VLAs)
 
 The heaviest study block; training runs are passive time — read while GPUs burn.
 
@@ -210,7 +211,7 @@ The heaviest study block; training runs are passive time — read while GPUs bur
 
 **Exit:** you can whiteboard the design axes — action tokenization vs flow expert, single- vs dual-system — and place all three of your fine-tuned models on them. **Stretch:** OpenVLA-OFT, ECoT, RDT-1B → F1 backlog.
 
-### Phase L-D — Weeks 10–13 · with build Phase D (RL, sim + HIL-SERL)
+### Phase L-D — Weeks 10–13 · 2026-11-08 → **2026-12-05** · with build Phase D (RL, sim + HIL-SERL)
 
 | Wk | Build context | Study — Core | ~h |
 |---|---|---|---|
@@ -221,7 +222,7 @@ The heaviest study block; training runs are passive time — read while GPUs bur
 
 **Exit:** G6 met and you can explain *why* HIL-SERL works where naive real-world RL fails (off-policy + demos + interventions + classifier rewards). **Stretch:** MR Ch. 8 & 11 (dynamics/control) → F2.
 
-### Phase L-E — Weeks 14–16 · consolidation (build load light; Phase-E gate at month 4)
+### Phase L-E — Weeks 14–16 · 2026-12-06 → **2026-12-26** · consolidation (build load light; Phase-E gate closes the year)
 
 | Wk | Focus | Study — Core | ~h |
 |---|---|---|---|
@@ -231,17 +232,17 @@ The heaviest study block; training runs are passive time — read while GPUs bur
 
 **Exit:** one policy running through an optimized inference path with honest confidence intervals; Phase-E go/no-go memo written with real evidence.
 
-### Phase F — Months 5–9 · depth & role-readiness (study becomes primary: 8–10 h/wk)
+### Phase F — Weeks 17–38 · 2026-12-27 → 2027-05-29 · depth & role-readiness (study becomes primary: 8–10 h/wk)
 
 | Block | Weeks | Content | Output |
 |---|---|---|---|
-| **F1 · Theory consolidation** | 17–24 | **ETH Robot Learning full pass** (lectures end-to-end; homeworks selectively — its repo has graded exercises); clear the paper backlog accumulated in L-phases; CS285 leftovers if any; *optional* DreamGen-style synthetic-data cloud experiment on your own task (~₹1,500–2,500) | Backlog cleared; one "what I misunderstood the first time" post |
-| **F2 · Classical + perception depth** | 25–29 | Modern Robotics completion — Ch. 4–6 deep if deferred, Ch. 8, 9, 11 [Deep], Ch. 10, 12 [Read]; capstone: NumPy FK + Jacobian-IK + gravity-compensation for the SO-101, verified in MuJoCo; MIT 6.4210 selected chapters (geometric perception, grasping, learning-based manipulation); Nayar playlists completed; FoundationPose [Aware] | The kinematics capstone repo — a standard interview artifact |
-| **F3 · Deployment & efficiency** | 30–32 | CS336 Lectures 1–3, 9, 10; quantization mini-project: int8/4-bit SmolVLA on the rig, **success-rate-vs-latency curve** (a genuinely uncommon portfolio piece); TensorRT pass on a second policy | Quantization study post |
-| **F4 · The three modules** | 33–34 | M1 ROS 2 (~8 h) · M2 C++ reading (~12 h) · M3 humanoid awareness (~4 h) | One-page cheat sheets for each |
-| **F5 · Portfolio & interview** | 35–38 | Capstone writeup ("a year of embodied AI on a desktop arm"); consolidate all G7 posts; LeRobot OSS contribution ladder (docs fix → bug fix → small feature); interview-prep checklist (§7) drilled; demo reel + résumé | Public portfolio; first applications out |
+| **F1 · Theory consolidation** | 17–24<br>2026-12-27 → 2027-02-20 | **ETH Robot Learning full pass** (lectures end-to-end; homeworks selectively — its repo has graded exercises); clear the paper backlog accumulated in L-phases; CS285 leftovers if any; *optional* DreamGen-style synthetic-data cloud experiment on your own task (~₹1,500–2,500) | Backlog cleared; one "what I misunderstood the first time" post |
+| **F2 · Classical + perception depth** | 25–29<br>2027-02-21 → 03-27 | Modern Robotics completion — Ch. 4–6 deep if deferred, Ch. 8, 9, 11 [Deep], Ch. 10, 12 [Read]; capstone: NumPy FK + Jacobian-IK + gravity-compensation for the SO-101, verified in MuJoCo; MIT 6.4210 selected chapters (geometric perception, grasping, learning-based manipulation); Nayar playlists completed; FoundationPose [Aware] | The kinematics capstone repo — a standard interview artifact |
+| **F3 · Deployment & efficiency** | 30–32<br>2027-03-28 → 04-17 | CS336 Lectures 1–3, 9, 10; quantization mini-project: int8/4-bit SmolVLA on the rig, **success-rate-vs-latency curve** (a genuinely uncommon portfolio piece); TensorRT pass on a second policy | Quantization study post |
+| **F4 · The three modules** | 33–34<br>2027-04-18 → 05-01 | M1 ROS 2 (~8 h) · M2 C++ reading (~12 h) · M3 humanoid awareness (~4 h) | One-page cheat sheets for each |
+| **F5 · Portfolio & interview** | 35–38<br>2027-05-02 → 05-29 | Capstone writeup ("a year of embodied AI on a desktop arm"); consolidate all G7 posts; LeRobot OSS contribution ladder (docs fix → bug fix → small feature); interview-prep checklist (§7) drilled; demo reel + résumé | Public portfolio; first applications out |
 
-**Months 10–12:** buffer — spillover, Stage-2 XLeRobot build if the Phase-E gate said go, interview cycles. This document gets a v2.0 at the same time the project plan does.
+**Buffer — 2027-06 → 2027-08:** — spillover, Stage-2 XLeRobot build if the Phase-E gate said go, interview cycles. This document gets a v2.0 at the same time the project plan does.
 
 ---
 

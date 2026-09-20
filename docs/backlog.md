@@ -47,8 +47,8 @@ First entries added at the **L0 gate**, 2026-08-05.
 
 | Item | Source/ID | Tag | Deferred from | Target | Date added | Notes |
 |---|---|---|---|---|---|---|
-| MuJoCo docs — Overview chapter | roadmap §4 wk 1 | [Read] | L0 | L-A | 2026-08-05 | D11 spine; pairs with the Menagerie item below |
-| Load the Menagerie SO-ARM100 model and poke it | roadmap §4 wk 1 | [Hands-on] | L0 | L-A | 2026-08-05 | **L0 study exit criterion, unmet at gate.** Carried into L-A, not to F1 — it gates nothing in the build but is the sim spine for L-D |
+| MuJoCo docs — Overview chapter | roadmap §4 wk 1 | [Read] | L0 | L-A (by **2026-10-03**) | 2026-08-05 | D11 spine; pairs with the Menagerie item below. Unread through the vacation gap |
+| Load the Menagerie SO-ARM100 model and poke it | roadmap §4 wk 1 | [Hands-on] | L0 | L-A (by **2026-10-03**) | 2026-08-05 | **L0 study exit criterion, unmet at gate.** Carried into L-A, not to F1 — it gates nothing in the build but is the sim spine for L-D |
 
 ---
 
@@ -81,6 +81,7 @@ Per rule 7, every ✂ names the residual risk. Reviewed at each gate alongside t
 | Item | Plan line | Status | Risk it mitigated | Phase | Date | Residual risk / what covers it now |
 |---|---|---|---|---|---|---|
 | Feetech STS3215 spare gear sets ×2 | plan §6 BOM-C (`plan.md:91`) | ✂ cut | R2 — servo DOA or stripped gear | 0 | 2026-07-26 | No standalone 1:345 SKU found at Robu, AliExpress or the Feetech resellers; TheRobotStudio SO-101 README documents no gear-replacement path. **Covered by the 13th spare servo in BOM-A** — a stripped gear now costs a whole servo instead of a gear set, and the spare is single-use |
+| Print the assembly-alignment jig | plan §Phase 0 (`plan.md:133`) | ⤴ deferred → Stage 2 / Phase E | R3 — print tolerance or quality issues | 0 | 2026-08-12 | Slipped the L0 gate 2026-08-05, recorded 2026-08-12. **R3 is retired for Stage 1**: both arms printed, assembled, wired, calibrated and driving each other, so the prints were true enough and a jig can no longer catch what it existed to catch. Residual risk applies only to *future* prints — reprints of a damaged part, and the Stage-2 second follower arm, which would be built without a squaring reference. Covered meanwhile by the two assembled arms as dimensional references and by the print-service fallback in the same R3 mitigation. Revisit at the Phase-E Stage-2 go/no-go |
 | Run simulated teleoperation | plan Phase 0 exit criterion | ⤴ deferred → L-D | Proving the control loop with no hardware at risk | 0 | 2026-08-05 | Real teleop on the follower ran first (`keyboard_teleop.py`), so the pipeline is proven — but **on hardware, which is what the criterion existed to avoid**. Residual risk: no zero-cost sandbox for testing a policy or a control change before it drives 30 kg·cm servos. Partly covered by the latched-overload handling in `keyboard_teleop.py` and a neutral-pose start; fully covered when the L-D MuJoCo/ManiSkill envs stand up |
 
 **Reversed, kept for the record:** inline fuse + kill-switch (plan §6 BOM-C, `plan.md:94`) was
@@ -90,20 +91,41 @@ never displaced it. The fused 12 V rail is architecture, not just a BOM line (`p
 
 ---
 
+## Schedule log
+
+Calendar re-baselines, with the reason and the size of the shift. Rule 1 applies to time the
+same way it applies to items: **a slip is recorded, never absorbed silently.** Week numbers in
+[progress.md](progress.md) and the two spec docs never change — the calendar they map to does.
+
+| Date | Event | Shift | Scope effect | New downstream dates |
+|---|---|---|---|---|
+| 2026-09-20 | Vacation 2026-08-16 → 2026-09-19 stopped work mid-Phase A (build week 2, last tracker update 2026-08-12) | **+5 weeks** from week 3 | **None** — straight shift, not a compression. No item cut, no [Deep] demoted, pacing stays Standard | Phase A exit 2026-10-03 · B 2026-10-17 · C 2026-11-07 · D 2026-11-28 · E gate 2026-12-26 · F1 opens 2026-12-27 · role-ready ~2027-05-29 |
+
+**Watch item from this re-baseline:** the two L0 carry-overs in the [Active backlog](#active-backlog) above (MuJoCo Overview, Menagerie
+SO-ARM100) were deferred on 2026-08-05 into L-A and have now sat through the gap unread. They
+are the oldest debt on the board. If they are still open at the **L-A gate on 2026-10-03**,
+rule 5 fires — the study track is then well past two weeks behind, Stretch gets cut and one
+[Deep] gets demoted. Clear them in week 3 (week of 2026-09-20) and the trigger never arms.
+
+---
+
 ## Gate review log
 
 One row per gate. 30 minutes at each build-phase exit against the roadmap: core done?
 backlog groomed? artifact shipped? Then advance (§8 rule 5). The artifact column carries the
 G7 installment that gate owes, per roadmap §7.
 
-| Date | Gate | Core complete? | Items added | Items cleared | Artifact shipped |
-|---|---|---|---|---|---|
-| 2026-08-05 | L0 exit | **No** — MuJoCo Overview + Menagerie SO-ARM100 (study exit criterion) unmet | 3 (MuJoCo Overview, Menagerie model, sim teleop) | 0 | — (no G7 due; first artifact is at L-A) |
-| | L-A exit | | | | G7 #1 — *"From kit to policy: 50 demos to 80% autonomous"* |
-| | L-B exit | | | | G7 #2 — *"How many demos is enough?"* (scaling curve + ablation + published dataset) |
-| | L-C exit | | | | G7 #3 — *"ACT vs SmolVLA vs a 3B VLA on the same desk"* |
-| | L-D exit | | | | G7 #4 — *"RL that actually worked: HIL-SERL vs my BC baseline"* |
-| | L-E exit | | | | G7 #5 — *"Making it fast: quantization, TensorRT, and async inference on a hobby arm"* (or held for F3's fuller version) |
+Dates in the first column are the **actual** review date once held; the *Due* column carries
+the re-baselined target from the [schedule log](#schedule-log) above.
+
+| Date | Due | Gate | Core complete? | Items added | Items cleared | Artifact shipped |
+|---|---|---|---|---|---|---|
+| 2026-08-05 | 2026-08-08 | L0 exit | **No** — MuJoCo Overview + Menagerie SO-ARM100 (study exit criterion) unmet | 3 (MuJoCo Overview, Menagerie model, sim teleop) | 0 | — (no G7 due; first artifact is at L-A) |
+| | **2026-10-03** | L-A exit | | | | G7 #1 — *"From kit to policy: 50 demos to 80% autonomous"* |
+| | 2026-10-17 | L-B exit | | | | G7 #2 — *"How many demos is enough?"* (scaling curve + ablation + published dataset) |
+| | 2026-11-07 | L-C exit | | | | G7 #3 — *"ACT vs SmolVLA vs a 3B VLA on the same desk"* |
+| | 2026-12-05 | L-D exit | | | | G7 #4 — *"RL that actually worked: HIL-SERL vs my BC baseline"* |
+| | 2026-12-26 | L-E exit | | | | G7 #5 — *"Making it fast: quantization, TensorRT, and async inference on a hobby arm"* (or held for F3's fuller version) |
 
 ---
 
@@ -114,8 +136,8 @@ Roadmap §8 rule 1: **one [Deep] item in flight at a time.** Everything else que
 - **Current [Deep]:** none — the slot is open. L0 closed 2026-08-05 with no [Deep] items
   (Karpathy #1 micrograd ☑ as a Deep-*course*, which never occupied the slot). L-A's [Deep]
   is ACT / ALOHA, gated on the first policy run, so the slot stays open until then.
-- **Next [Deep]:** **ACT / ALOHA — 2304.13705**, roadmap §5 #5, scheduled **L-A week 4**,
-  read *after* the first policy runs.
+- **Next [Deep]:** **ACT / ALOHA — 2304.13705**, roadmap §5 #5, scheduled **L-A week 4 —
+  week of 2026-09-27**, read *after* the first policy runs.
 - **Queued behind it:** Diffusion Policy (2303.04137, L-B) → *Attention Is All You Need*
   (1706.03762, L-C) → LoRA (2106.09685, L-C) → π0 (2410.24164, L-C) → GR00T N1
   (2503.14734, L-C) → SmolVLA (2506.01844, L-C) → HIL-SERL (2410.21845, L-D) → TRI LBM

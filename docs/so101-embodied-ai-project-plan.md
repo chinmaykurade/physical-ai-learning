@@ -3,6 +3,7 @@
 **Owner:** Chinmay · **Location:** Kerala, India · **Date:** 24 July 2026 · **Version:** 1.1
 **Status:** Ready for procurement · **Stage:** 1 of 2 (Stage 2 = XLeRobot dual-arm mobile robot)
 **v1.1 changes:** full BOM with fabrication equipment (Bambu Lab P2S Combo), filament requirements, optional items, and a course curriculum mapped to phases.
+**Schedule re-baselined 20 September 2026:** a ~5-week vacation (2026-08-16 → 2026-09-19) stopped work mid-Phase A. Week 3 onward is shifted **+5 weeks** and re-anchored, with scope and pacing unchanged. Week numbers below are unchanged; §7 carries the calendar they now map to, and [progress.md](progress.md) is the live board.
 
 ---
 
@@ -126,37 +127,37 @@ A rigid desk with the camera clamped (never handheld), consistent artificial lig
 
 ## 6. Phase Plan
 
-### Phase 0 — Procurement & Preparation (Week 0–1)
+### Phase 0 — Procurement & Preparation (Week 0–1 · 2026-07-26 → 2026-08-08) ☑ complete
 
 *Objective: everything on the desk and the software stack proven before assembly begins.*
 
 Order the full BOM on day 1. While shipping: print all follower and leader parts plus the assembly-alignment jig; install Ubuntu, the Python environment, and LeRobot; run simulated teleoperation and a toy training job end-to-end so the pipeline is verified before hardware exists. **Exit criteria:** all parts received and inspected; simulated teleop + training run completes.
 
-### Phase A — Build & First Autonomous Policy (Weeks 1–4)
+### Phase A — Build & First Autonomous Policy (Weeks 1–4 · 2026-08-02 → 2026-10-03) ◐ in progress
 
 *Objective: a calibrated leader/follower rig and a trained ACT policy — the full imitation-learning loop, experienced once.*
 
 Set each servo's bus ID **before** assembly and label every cable. Assemble follower, then leader; wire each to its adapter; run joint calibration. Practice teleoperation until pick-and-place feels fluent. Define one canonical task (cube → bowl), record ~50 short episodes (10–15 s), train ACT overnight on the 3080, and evaluate over 10 scripted trials. **Deliverables:** calibration record, 50-episode dataset, trained checkpoint, evaluation log. **Learning outcomes:** behavior cloning, action chunking and temporal ensembling, dataset hygiene, why demonstration quality dominates architecture. **Study track:** HF Robotics Course, Unit 0 through the imitation-learning unit; read the ACT paper after the first policy runs. **Exit criteria:** G1 and G2 met.
 
-### Phase B — Data-Centric Experiments (Weeks 4–6)
+### Phase B — Data-Centric Experiments (Weeks 4–6 · 2026-09-27 → 2026-10-17)
 
 *Objective: learn the experimental methodology behind large behavior models at desk scale.*
 
 Re-record the canonical task at 10/25/50/100 episodes and plot success-rate scaling. Add the wrist camera and ablate it. Train Diffusion Policy on identical data and compare against ACT. Publish the best dataset with documentation to the Hugging Face Hub. **Deliverables:** scaling curve, ablation table, method comparison, public dataset, written note (G3, first G7 installment). **Learning outcomes:** data-centric ML practice, diffusion/flow policies, evaluation discipline, the reasoning behind TRI-style LBMs. **Study track:** MIT 6.4210 selected chapters (perception, grasping, learning-based manipulation); Diffusion Policy paper before the method comparison; TRI LBM report after it.
 
-### Phase C — Vision-Language-Action Models (Weeks 6–9)
+### Phase C — Vision-Language-Action Models (Weeks 6–9 · 2026-10-11 → 2026-11-07)
 
 *Objective: language-conditioned control, from a small local VLA to a frontier model fine-tuned on own data.*
 
 Record a 3–4 task dataset with language annotations. Fine-tune SmolVLA locally; verify instruction-following ("pick up the red cube" vs "put the sponge in the tray"). Then rent an A100 for a few hours and LoRA-fine-tune GR00T N1.7 or π0 using their SO-101 configs; export and run inference on the 3080. Build a small evaluation harness that scores each instruction separately. **Deliverables:** G4 and G5, plus a written comparison of the three models' data efficiency and failure modes. **Learning outcomes:** VLM backbones, action tokenization vs flow-matching action experts, LoRA fine-tuning economics, local deployment of 3 B-class models. **Study track:** HF Robotics Course foundation-model units; NVIDIA DLI Isaac Lab course before the GR00T fine-tune; SmolVLA → π0 → GR00T papers in that order (smallest to largest).
 
-### Phase D — Reinforcement Learning (Weeks 9–12)
+### Phase D — Reinforcement Learning (Weeks 9–12 · 2026-11-01 → 2026-11-28)
 
 *Objective: RL where it actually works in 2026 — simulation at scale, and sample-efficient human-in-the-loop RL on real hardware.*
 
 Simulation track: train PPO/SAC on the SO-101 MuJoCo/ManiSkill environments, experiment with reward shaping and domain randomization, attempt a sim-to-real transfer and document the gap honestly. Real-world track: set up LeRobot's HIL-SERL with the leader arm as the intervention device; train one contact-rich task (e.g., precise insertion) and compare against its BC baseline. **Deliverables:** G6, sim2real writeup. **Learning outcomes:** reward design, off-policy RL with human corrections, why HIL-SERL succeeds where naive real-world RL fails. **Study track:** CS285 model-free RL and offline-RL lecture blocks (or the HF Deep RL Course end-to-end as the faster path); SERL and HIL-SERL papers before the real-robot run; Spinning Up as the standing reference.
 
-### Phase E — Stage 2 Decision Gate (Month 4+)
+### Phase E — Stage 2 Decision Gate (Weeks 14–16 · 2026-12-06 → 2026-12-26)
 
 *Objective: a deliberate go/no-go on scaling to the XLeRobot.*
 
@@ -164,16 +165,21 @@ Review outcomes against G1–G7, then decide on the upgrade: second follower arm
 
 ## 7. Timeline Summary
 
-| Weeks | Phase | Key milestone |
-|---|---|---|
-| 0–1 | Phase 0 | Parts ordered day 1; sim pipeline verified |
-| 1–4 | Phase A | First autonomous ACT policy ≥ 80 % |
-| 4–6 | Phase B | Scaling study + public dataset |
-| 6–9 | Phase C | Language-conditioned VLA, cloud fine-tune deployed locally |
-| 9–12 | Phase D | HIL-SERL task beats BC baseline |
-| 16+ | Phase E | Stage 2 go/no-go |
+Calendar re-baselined **20 September 2026** (+5 weeks from week 3; see the header note).
+Weeks run Sunday → Saturday. The live board is [progress.md](progress.md); this table is the reference schedule.
 
-Pacing assumes ~8–10 focused hours per week; phases are sequential but reading and printing parallelize with shipping and training runs.
+| Weeks | Calendar | Phase | Key milestone | Status |
+|---|---|---|---|---|
+| 0–1 | 2026-07-26 → 08-08 | Phase 0 | Parts ordered day 1; sim pipeline verified | ☑ closed 2026-08-05 |
+| — | 2026-08-16 → 09-19 | *vacation* | *5 weeks, no work — the source of the +5-week shift* | — |
+| 1–4 | 2026-08-02 → **10-03** | Phase A | First autonomous ACT policy ≥ 80 % | ◐ teleop up; record/train/eval outstanding |
+| 4–6 | 2026-09-27 → **10-17** | Phase B | Scaling study + public dataset | ☐ |
+| 6–9 | 2026-10-11 → **11-07** | Phase C | Language-conditioned VLA, cloud fine-tune deployed locally | ☐ |
+| 9–12 | 2026-11-01 → **11-28** | Phase D | HIL-SERL task beats BC baseline | ☐ |
+| 14–16 | 2026-12-06 → **12-26** | Phase E | Stage 2 go/no-go | ☐ |
+| 17–38 | 2026-12-27 → **2027-05-29** | Phase F | Depth & role-readiness (roadmap §4) | ☐ |
+
+Pacing assumes ~8–10 focused hours per week; phases are sequential but reading and printing parallelize with shipping and training runs. Phase windows overlap at their boundaries by design — that overlap is the parallelization, not slack.
 
 ## 8. Budget Summary
 
