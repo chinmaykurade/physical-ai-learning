@@ -12,23 +12,79 @@ it does not duplicate them.
 
 | | |
 |---|---|
-| **Current build phase** | **Phase A — Build & First Autonomous Policy** (weeks 1–4) |
-| **Current study phase** | **L-A** (weeks 1–4) |
+| **Today** | 2026-09-20 — **week 3** of the re-baselined calendar |
+| **Current build phase** | **Phase A — Build & First Autonomous Policy** · weeks 1–4 · **2026-08-02 → 2026-10-03** |
+| **Current study phase** | **L-A** · weeks 1–4 · **2026-08-02 → 2026-10-03** |
 | **Current [Deep] in flight** | none — next is ACT / ALOHA, gated on the first policy run |
-| **Next [Deep]** | ACT / ALOHA (2304.13705), L-A week 4 |
+| **Next [Deep]** | ACT / ALOHA (2304.13705), L-A week 4 — **week of 2026-09-27** |
 | **Pacing track** | Standard (5–6 h/wk build + 3–5 h/wk study) |
-| **Next gate** | L-A exit — G1 and G2 met, G7 #1 shipped |
-| **Last updated** | 2026-08-05 |
+| **Next gate** | L-A exit — **due 2026-10-03** — G1 and G2 met, G7 #1 shipped |
+| **Last updated** | 2026-09-20 — schedule re-baselined +5 weeks after the vacation gap |
 
 **Status legend:** ☐ not started · ◐ in progress · ☑ done · ⤴ moved to [backlog.md](backlog.md)
 · ✂ cut (recorded, never silent)
 
 **Week numbering:** build weeks follow plan §7, study weeks follow roadmap §4. They agree
 everywhere except Phase D (plan: weeks 9–12; roadmap L-D: weeks 10–13) — both are shown below.
+Every week number resolves to a date in the [calendar](#calendar) below.
 
 **Weekly rhythm (roadmap §4):** Sunday — pick the week's one [Deep] item and one shippable
 output. Midweek — papers and lectures ride along with prints, shipping waits, and training
 runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to backlog.
+
+### Schedule re-baseline — 2026-09-20
+
+Work stopped **2026-08-12** (build week 2, Phase A mid-flight) and resumed **2026-09-20**
+after a ~5-week vacation. Weeks 0–2 keep their original dates; **week 3 onward is shifted
++5 weeks** and re-anchored to today. This is a *shift, not a compression*: scope is
+unchanged, pacing stays Standard, and no item was cut or demoted. Consequences — Phase A
+exit moves to **2026-10-03**, the Phase-E gate to **2026-12-20**, Phase F opens
+**2026-12-27**, and the role-ready target lands **end of May 2027**.
+
+Still carried from the L0 gate and now the oldest debt on the board: MuJoCo docs Overview
+and the Menagerie SO-ARM100 model (the L0 study exit criterion). If they are still open at
+the L-A gate, roadmap §8 rule 4 fires — see [backlog.md](backlog.md).
+
+<a id="calendar"></a>
+### Calendar — week → date
+
+Weeks run **Sunday → Saturday**, matching the weekly rhythm above. Phase windows overlap by
+design (the plan's parallelization rule); a week belongs to whichever phase its tasks do.
+
+| Wk | Week of | Build phase | Study phase |
+|---|---|---|---|
+| 0 | 2026-07-26 | Phase 0 | L0 |
+| 1 | 2026-08-02 | Phase 0 → A | L0 → L-A |
+| 2 | 2026-08-09 | Phase A | L-A |
+| — | *2026-08-16 → 2026-09-19* | *vacation — 5 weeks, no work* | — |
+| 3 | **2026-09-20** ← today | Phase A | L-A |
+| 4 | 2026-09-27 | Phase A exit **2026-10-03** | L-A |
+| 5 | 2026-10-04 | Phase B | L-B |
+| 6 | 2026-10-11 | Phase B exit **2026-10-17** → C | L-B → L-C |
+| 7 | 2026-10-18 | Phase C | L-C |
+| 8 | 2026-10-25 | Phase C | L-C |
+| 9 | 2026-11-01 | Phase C exit **2026-11-07** → D | L-C |
+| 10 | 2026-11-08 | Phase D | L-C spill → L-D |
+| 11 | 2026-11-15 | Phase D | L-D |
+| 12 | 2026-11-22 | Phase D exit **2026-11-28** | L-D |
+| 13 | 2026-11-29 | Phase D tail | L-D exit **2026-12-05** |
+| 14 | 2026-12-06 | Phase E | L-E |
+| 15 | 2026-12-13 | Phase E | L-E |
+| 16 | 2026-12-20 | **Phase E gate — 2026-12-26** | L-E exit |
+| 17–24 | 2026-12-27 → 2027-02-20 | — | **F1** theory consolidation |
+| 25–29 | 2027-02-21 → 2027-03-27 | — | **F2** classical + perception |
+| 30–32 | 2027-03-28 → 2027-04-17 | — | **F3** deployment & efficiency |
+| 33–34 | 2027-04-18 → 2027-05-01 | — | **F4** the three modules |
+| 35–38 | 2027-05-02 → 2027-05-29 | — | **F5** portfolio & interview |
+| buffer | 2027-06 → 2027-08 | Stage-2 XLeRobot if go | spillover, interview cycles |
+
+### Next up — the dated near term
+
+| Week of | Build | Study — Core |
+|---|---|---|
+| **2026-09-20** (wk 3) | ☑ re-verify + re-calibrate + teleop practice + wrist cam mounted. Left: tape both camera framings; timed 30-min session (**G1**); record ~50 episodes | HF Robotics Course IL unit; DAgger [Read]; Karpathy #2–3. Clear the L0 debt: MuJoCo Overview + Menagerie |
+| **2026-09-27** (wk 4) | Finish the 50 episodes; train ACT overnight; 10-trial eval (**G2**); settle D1; ship G7 #1 → L-A gate **2026-10-03** | Weng VAE + CVAE [Skim] pre-reads, then **ACT [Deep]**; LeRobot code-read 4 (`modeling_act`) |
+| **2026-10-04** (wk 5) | Phase B opens: re-record at 10/25/50/100; mount and calibrate the wrist camera | 6.S184 L1–2 + Weng diffusion blog; camera intrinsics + **hand-eye calibration** |
 
 ---
 
@@ -56,7 +112,7 @@ runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to 
 
 ---
 
-## Phase 0 / L0 — Procurement & Preparation · weeks 0–1
+## Phase 0 / L0 — Procurement & Preparation · weeks 0–1 · 2026-07-26 → 2026-08-08 ☑
 
 **Build exit criteria:** all parts received and inspected; simulated teleop + training run completes.
 **Study exit:** experiment tooling live; a MuJoCo model of the arm run before the real one exists.
@@ -72,7 +128,7 @@ runs. Saturday — 30-minute log into `notes/`: what was learned, what moved to 
 | Calibrate the printer | ☑ | 2026-08-05. Risk R3 |
 | Print all follower parts | ☑ | 2026-08-05 |
 | Print all leader parts | ☑ | 2026-08-05 |
-| Print the assembly-alignment jig | ☐ | |
+| Print the assembly-alignment jig | ⤴ | Deferred to Stage 2 on 2026-08-12 — R3 retired, both arms built. See [backlog.md](backlog.md) |
 | Install Ubuntu native dual-boot | ☑ | Native Linux confirmed, kernel 7.0.0-28-generic. Never WSL2 (R5) |
 | Create the Python environment | ☑ | uv venv at `/home/chinmay/lerobot-env`, Python 3.12.3 |
 | Install LeRobot + Feetech extras, pinned | ☑ | `lerobot==0.6.0`; 18 `lerobot-*` CLI entry points present |
@@ -114,7 +170,7 @@ SO-ARM100 model (the study exit criterion) carry into L-A. Sim teleop ⤴ to L-D
 
 ---
 
-## Phase A / L-A — Build & First Autonomous Policy · weeks 1–4
+## Phase A / L-A — Build & First Autonomous Policy · weeks 1–4 · 2026-08-02 → **2026-10-03**
 
 **Exit criteria:** G1 and G2 met. **Study exit:** explain every block of ACT against your own training curves.
 
@@ -122,14 +178,14 @@ SO-ARM100 model (the study exit criterion) carry into L-A. Sim teleop ⤴ to L-D
 
 | Task | Status | Notes |
 |---|---|---|
-| Set every servo's bus ID **before** assembly | ☑ | Follower set 2026-08-05; leader IDs still to do |
-| Label every cable | ☐ | Bus hygiene |
+| Set every servo's bus ID **before** assembly | ☑ | Follower 2026-08-05, leader 2026-08-06 |
+| Label every cable | ☑ | 2026-08-12. Bus hygiene, risk R8 |
 | Assemble the follower arm | ☑ | 2026-08-05 |
-| Assemble the leader arm | ☐ | Parts printed 2026-08-05 |
-| Wire each arm to its adapter; fused 12 V rail + kill switch | ◐ | Follower wired 2026-08-05 on `/dev/ttyACM1`; leader pending. Risk R8 |
-| Run joint calibration on both arms | ◐ | Follower calibrated 2026-08-05; leader pending. Deliverable: calibration record |
-| Practice teleoperation to fluency; 30-min fault-free session | ☐ | **G1** |
-| Define the canonical task (cube → bowl) | ☐ | |
+| Assemble the leader arm | ☑ | 2026-08-06 |
+| Wire each arm to its adapter; fused 12 V rail + kill switch | ☑ | Follower `/dev/ttyACM1`, leader `/dev/ttyACM0`. Risk R8 |
+| Run joint calibration on both arms | ☑ | Re-run both arms 2026-09-20; `calibration/` + [notes](../notes/2026-08-05-calibration-and-motor-ids.md) |
+| Practice teleoperation to fluency; 30-min fault-free session | ◐ | Fluency practice 2026-09-20; timed 30-min session outstanding. **G1** |
+| Define the canonical task (cube → bowl) | ☑ | 2026-08-12; camera framing not yet fixed |
 | Record ~50 episodes, 10–15 s each | ☐ | Deliverable: 50-episode dataset |
 | Train ACT overnight on the 3080 | ☐ | Deliverable: trained checkpoint |
 | Evaluate over 10 scripted trials | ☐ | **G2** ≥ 8/10. Deliverable: evaluation log |
@@ -165,12 +221,12 @@ SO-ARM100 model (the study exit criterion) carry into L-A. Sim teleop ⤴ to L-D
 |---|---|---|---|
 | Modern Robotics Ch. 4 (FK) + NumPy FK for the SO-101 | [Deep] | F2 | ☐ |
 
-### L-A gate
+### L-A gate — due 2026-10-03
 ☐ Core done? ☐ Backlog groomed? ☐ G7 #1 shipped?
 
 ---
 
-## Phase B / L-B — Data-Centric Experiments · weeks 4–6
+## Phase B / L-B — Data-Centric Experiments · weeks 4–6 · 2026-09-27 → **2026-10-17**
 
 **Deliverables:** scaling curve, ablation table, method comparison, public dataset, written note (G3).
 **Study exit:** the curve and ablation exist *and* you can say why DP handles multimodal actions where naive BC can't.
@@ -181,7 +237,7 @@ SO-ARM100 model (the study exit criterion) carry into L-A. Sim teleop ⤴ to L-D
 |---|---|---|
 | Re-record the canonical task at 10 / 25 / 50 / 100 episodes | ☐ | Camera must not move between runs (R4) |
 | Plot the success-rate scaling curve | ☐ | Deliverable |
-| Mount and calibrate the wrist camera | ☐ | |
+| Mount and calibrate the wrist camera | ◐ | Gripper mount done 2026-09-20, early; hand-eye calibration pending (L-B wk 5) |
 | Run the wrist-camera ablation | ☐ | Deliverable: ablation table |
 | Train Diffusion Policy on identical data | ☐ | |
 | Compare DP vs ACT (success + sampling cost) | ☐ | Deliverable: method comparison |
@@ -221,12 +277,12 @@ SO-ARM100 model (the study exit criterion) carry into L-A. Sim teleop ⤴ to L-D
 |---|---|---|---|
 | Nayar — full image-formation playlist | [Deep] | F2 | ☐ |
 
-### L-B gate
+### L-B gate — due 2026-10-17
 ☐ Core done? ☐ Backlog groomed? ☐ G7 #2 shipped?
 
 ---
 
-## Phase C / L-C — Vision-Language-Action Models · weeks 6–9 (spill to 10)
+## Phase C / L-C — Vision-Language-Action Models · weeks 6–9 (spill to 10) · 2026-10-11 → **2026-11-07** (spill to 11-14)
 
 The heaviest study block. Training runs are passive time — read while GPUs burn.
 **Study exit:** whiteboard the design axes (tokenization vs flow expert, single vs dual system) and place all three fine-tuned models on them.
@@ -300,12 +356,12 @@ Strict order matters here — the VLA lineage *is* the lesson (roadmap §3, D8).
 | ECoT | 2407.08693 | [Aware] | F1 | ☐ |
 | RDT-1B | — | [Aware] | F1 | ☐ |
 
-### L-C gate
+### L-C gate — due 2026-11-07
 ☐ Core done? ☐ Backlog groomed? ☐ G7 #3 shipped?
 
 ---
 
-## Phase D / L-D — Reinforcement Learning · build weeks 9–12 · study weeks 10–13
+## Phase D / L-D — Reinforcement Learning · build weeks 9–12 (2026-11-01 → **2026-11-28**) · study weeks 10–13 (2026-11-08 → **2026-12-05**)
 
 **Exit:** G6 met, and you can explain *why* HIL-SERL works where naive real-world RL fails.
 
@@ -357,12 +413,12 @@ Strict order matters here — the VLA lineage *is* the lesson (roadmap §3, D8).
 |---|---|---|---|
 | Modern Robotics Ch. 8 & 11 (dynamics / control) | [Deep] | F2 | ☐ |
 
-### L-D gate
+### L-D gate — due 2026-12-05
 ☐ Core done? ☐ Backlog groomed? ☐ G7 #4 shipped?
 
 ---
 
-## Phase E / L-E — Consolidation & Stage-2 Gate · study weeks 14–16 · build gate month 4+
+## Phase E / L-E — Consolidation & Stage-2 Gate · study weeks 14–16 · 2026-12-06 → **2026-12-26**
 
 **Exit:** one policy running through an optimized inference path with honest confidence intervals; the Phase-E go/no-go memo written with real evidence.
 
@@ -405,14 +461,14 @@ Strict order matters here — the VLA lineage *is* the lesson (roadmap §3, D8).
 
 No Stretch items — L-E is all Core.
 
-### L-E gate
+### L-E gate — due 2026-12-26
 ☐ Core done? ☐ Backlog groomed? ☐ G7 #5 shipped?
 
 ---
 
-## Phase F — Depth & Role-Readiness · months 5–9 (study becomes primary, 8–10 h/wk)
+## Phase F — Depth & Role-Readiness · 2026-12-27 → 2027-05-29 (study becomes primary, 8–10 h/wk)
 
-### F1 · Theory consolidation — weeks 17–24
+### F1 · Theory consolidation — weeks 17–24 · 2026-12-27 → 2027-02-20
 
 | Task | Status |
 |---|---|
@@ -424,7 +480,7 @@ No Stretch items — L-E is all Core.
 | *Optional* DreamGen-style synthetic-data cloud experiment (~₹1,500–2,500) | ☐ |
 | Output: one *"what I misunderstood the first time"* post | ☐ |
 
-### F2 · Classical + perception depth — weeks 25–29
+### F2 · Classical + perception depth — weeks 25–29 · 2027-02-21 → 2027-03-27
 
 | Task | Status |
 |---|---|
@@ -437,7 +493,7 @@ No Stretch items — L-E is all Core.
 | SigLIP (2303.15343) [Skim] · DINOv2 (2304.07193) [Skim] · SAM/SAM-2 (2304.02643) [Skim] · FoundationPose [Aware] | ☐ |
 | Output: the kinematics capstone repo (G7 #6) | ☐ |
 
-### F3 · Deployment & efficiency — weeks 30–32
+### F3 · Deployment & efficiency — weeks 30–32 · 2027-03-28 → 2027-04-17
 
 | Task | Status |
 |---|---|
@@ -447,7 +503,7 @@ No Stretch items — L-E is all Core.
 | TensorRT pass on a second policy | ☐ |
 | Output: quantization study post (G7 #7) | ☐ |
 
-### F4 · The three modules — weeks 33–34
+### F4 · The three modules — weeks 33–34 · 2027-04-18 → 2027-05-01
 
 | Task | Budget | Status |
 |---|---|---|
@@ -456,7 +512,7 @@ No Stretch items — L-E is all Core.
 | M3 — Humanoid/whole-body awareness (GR00T N1.6 blog, Helix, one sim2real overview) | ~4 h timeboxed | ☐ |
 | Output: one-page cheat sheet per module | | ☐ |
 
-### F5 · Portfolio & interview — weeks 35–38
+### F5 · Portfolio & interview — weeks 35–38 · 2027-05-02 → 2027-05-29
 
 | Task | Status |
 |---|---|
@@ -467,7 +523,7 @@ No Stretch items — L-E is all Core.
 | Demo reel + résumé | ☐ |
 | Output: public portfolio; first applications out (G7 #8) | ☐ |
 
-**Months 10–12 — buffer:** spillover · Stage-2 XLeRobot build if the Phase-E gate said go · interview cycles.
+**Buffer — 2027-06 → 2027-08:** spillover · Stage-2 XLeRobot build if the Phase-E gate said go · interview cycles.
 
 ---
 
@@ -478,6 +534,9 @@ No Stretch items — L-E is all Core.
   [backlog.md](backlog.md) with its tag, target and date. The ⤴ here is a pointer, not the record.
 - ✂ (cut) requires a dated reason in the Notes column. Nothing disappears silently.
 - Update **Where I am now** at every phase gate — current phase, [Deep] in flight, next gate.
+- **Dates come from the [calendar](#calendar), and the calendar is re-baselined, never fudged.**
+  If a phase slips, shift the anchor and record the shift with its reason — don't quietly
+  restate a week number as still on time.
 - Weekly log prose goes in `notes/`, not here. This file holds status only.
 - **Notes cells are one line — ~15 words, two clauses at most.** They carry only what cannot be
   recomputed: a date, a version, a measurement, an identifier, a path, a risk ID, an
