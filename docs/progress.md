@@ -12,14 +12,14 @@ it does not duplicate them.
 
 | | |
 |---|---|
-| **Today** | 2026-09-20 — **week 3** of the re-baselined calendar |
+| **Today** | 2026-09-21 — **week 3** of the re-baselined calendar |
 | **Current build phase** | **Phase A — Build & First Autonomous Policy** · weeks 1–4 · **2026-08-02 → 2026-10-03** |
 | **Current study phase** | **L-A** · weeks 1–4 · **2026-08-02 → 2026-10-03** |
 | **Current [Deep] in flight** | none — next is ACT / ALOHA, gated on the first policy run |
 | **Next [Deep]** | ACT / ALOHA (2304.13705), L-A week 4 — **week of 2026-09-27** |
 | **Pacing track** | Standard (5–6 h/wk build + 3–5 h/wk study) |
 | **Next gate** | L-A exit — **due 2026-10-03** — G1 and G2 met, G7 #1 shipped |
-| **Last updated** | 2026-09-20 — schedule re-baselined +5 weeks after the vacation gap |
+| **Last updated** | 2026-09-21 — 50-episode dataset recorded and published to the Hub; D3 settled |
 
 **Status legend:** ☐ not started · ◐ in progress · ☑ done · ⤴ moved to [backlog.md](backlog.md)
 · ✂ cut (recorded, never silent)
@@ -82,8 +82,8 @@ design (the plan's parallelization rule); a week belongs to whichever phase its 
 
 | Week of | Build | Study — Core |
 |---|---|---|
-| **2026-09-20** (wk 3) | ☑ re-verify + re-calibrate + teleop practice + wrist cam mounted. Left: tape both camera framings; timed 30-min session (**G1**); record ~50 episodes | HF Robotics Course IL unit; DAgger [Read]; Karpathy #2–3. Clear the L0 debt: MuJoCo Overview + Menagerie |
-| **2026-09-27** (wk 4) | Finish the 50 episodes; train ACT overnight; 10-trial eval (**G2**); settle D1; ship G7 #1 → L-A gate **2026-10-03** | Weng VAE + CVAE [Skim] pre-reads, then **ACT [Deep]**; LeRobot code-read 4 (`modeling_act`) |
+| **2026-09-20** (wk 3) | ☑ re-verify + re-calibrate + teleop practice + wrist cam mounted + 50 episodes recorded and published. Left: tape both camera framings; timed 30-min session (**G1**) | HF Robotics Course IL unit; DAgger [Read]; Karpathy #2–3. Clear the L0 debt: MuJoCo Overview + Menagerie |
+| **2026-09-27** (wk 4) | Train ACT overnight; 10-trial eval (**G2**); settle D1; ship G7 #1 → L-A gate **2026-10-03** | Weng VAE + CVAE [Skim] pre-reads, then **ACT [Deep]**; LeRobot code-read 4 (`modeling_act`) |
 | **2026-10-04** (wk 5) | Phase B opens: re-record at 10/25/50/100; mount and calibrate the wrist camera | 6.S184 L1–2 + Weng diffusion blog; camera intrinsics + **hand-eye calibration** |
 
 ---
@@ -106,7 +106,7 @@ design (the plan's parallelization rule); a week belongs to whichever phase its 
 |---|---|---|---|
 | D1 | Leader-arm feel — stay on C018 vs import lighter gear-ratio servos | A (after teleop practice) | ☐ open |
 | D2 | Backup teleop / intervention device — keyboard vs gamepad | D (HIL-SERL setup) | ☐ open — PS5 controller already on hand, so the gamepad option costs nothing to try |
-| D3 | Dataset license for Hub publication (CC-BY-4.0 vs Apache-2.0) | B | ☐ open |
+| D3 | Dataset license for Hub publication (CC-BY-4.0 vs Apache-2.0) | B | ☑ **cc-by-4.0**, settled 2026-09-21 on first Hub publication |
 | D4 | Stage-2 base — dual-wheel vs omni | E | ☐ open |
 | D5 | Stage-2 power — battery / power-station choice | E | ☐ open |
 
@@ -186,7 +186,7 @@ SO-ARM100 model (the study exit criterion) carry into L-A. Sim teleop ⤴ to L-D
 | Run joint calibration on both arms | ☑ | Re-run both arms 2026-09-20; `calibration/` + [notes](../notes/2026-08-05-calibration-and-motor-ids.md) |
 | Practice teleoperation to fluency; 30-min fault-free session | ◐ | Fluency practice 2026-09-20; timed 30-min session outstanding. **G1** |
 | Define the canonical task (cube → bowl) | ☑ | 2026-08-12; camera framing not yet fixed |
-| Record ~50 episodes, 10–15 s each | ☐ | Deliverable: 50-episode dataset |
+| Record ~50 episodes, 10–15 s each | ☑ | 2026-09-21. 50 eps / 17,953 frames @ 30 fps, top+wrist. 12 s/episode |
 | Train ACT overnight on the 3080 | ☐ | Deliverable: trained checkpoint |
 | Evaluate over 10 scripted trials | ☐ | **G2** ≥ 8/10. Deliverable: evaluation log |
 | Settle decision D1 (leader-arm feel) | ☐ | After teleop practice |
@@ -241,8 +241,8 @@ SO-ARM100 model (the study exit criterion) carry into L-A. Sim teleop ⤴ to L-D
 | Run the wrist-camera ablation | ☐ | Deliverable: ablation table |
 | Train Diffusion Policy on identical data | ☐ | |
 | Compare DP vs ACT (success + sampling cost) | ☐ | Deliverable: method comparison |
-| Write the dataset card; settle decision D3 (license) | ☐ | CC-BY-4.0 vs Apache-2.0 |
-| Publish the best dataset to the HF Hub | ☐ | **G3** |
+| Write the dataset card; settle decision D3 (license) | ◐ | D3 settled cc-by-4.0 2026-09-21; card is still the auto-generated stub |
+| Publish the best dataset to the HF Hub | ◐ | **G3**. 50-ep set public 2026-09-21; "best" set awaits the scaling runs |
 | Ship G7 #2 — *"How many demos is enough?"* | ☐ | → `notes/` |
 
 ### Study — Core
