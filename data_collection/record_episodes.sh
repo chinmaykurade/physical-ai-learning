@@ -60,8 +60,8 @@ HF_USER=chinmaykurade
 DATASET_NAME=so101_cube_to_bowl_50
 TASK="Pick up the cube and place it in the bowl"
 NUM_EPISODES=50
-EPISODE_TIME_S=15      # lerobot default is 60 — far too long for a 10-15 s task
-RESET_TIME_S=10        # lerobot default is 60
+EPISODE_TIME_S=12      # lerobot default is 60 — far too long for a 10-15 s task
+RESET_TIME_S=7        # lerobot default is 60
 FPS=30
 
 # Keep false until decision D3 (dataset license) is settled — see docs/progress.md.
