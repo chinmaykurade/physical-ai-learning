@@ -211,10 +211,66 @@ outputs/train/act_cube_to_bowl/checkpoints/{010000,...,last}/pretrained_model/
 outputs/logs/act_cube_to_bowl.log
 ```
 
-If it dies partway — power cut, OOM, an accidental Ctrl-C — `./train_act.sh resume` picks up
-from `checkpoints/last`, restoring the optimizer, scheduler, step counter and data order.
-Note that on resume the **checkpoint's** config wins over CONFIG; flags passed after `resume`
-are the only override.
+### If it dies partway
+
+**There is no W&B checkpoint to restart from, and there is not meant to be.** `train` passes
+`--wandb.disable_artifact=true`, so `WandBLogger.log_policy` returns before it builds an
+artifact and nothing is ever uploaded. W&B holds metrics here, not weights. Resume reads from
+local disk:
+
+```bash
+./train_act.sh resume
+```
+
+It reports the step it is picking up from and the time remaining before it starts, so an
+interruption's real cost is visible before you spend hours redoing it.
+
+What `checkpoints/<step>/` actually holds, and what resume restores from it:
+
+| | |
+|---|---|
+| `pretrained_model/` | weights, policy config, **`train_config.json`** (the resume entry point) |
+| `training_state/` | optimizer state, LR scheduler state, **RNG state**, step counter |
+| restored | step, optimizer, scheduler, RNG, and the data order — LeRobot recomputes the dataloader offset from the saved `num_processes × batch_size`, so the resume is *sample-exact*, not just "same weights" |
+| `checkpoints/last` | a symlink to the newest one, so it costs no disk |
+
+**W&B continues the same run, it does not fork a new one.** `wandb.init` is called with
+`resume="must"` and the run id recovered from `cfg.wandb.run_id` in the checkpoint's
+`train_config.json` (falling back to globbing `<output_dir>/wandb/latest-run/`). The loss curve
+carries on across the gap rather than restarting at step 0 in a second run.
+
+That strictness is also the one trap: `resume="must"` means wandb **raises** if the id cannot
+be resolved — a W&B run deleted server-side, or a first run made with `WANDB_ENABLE=false`,
+fails the resume at startup rather than quietly opening a new run. Re-run with
+`--wandb.enable=false` to get training back without it.
+
+**Worst case you lose `SAVE_FREQ` steps** — 10,000 at ~6.5 steps/s is about **26 minutes** of
+the 4.3 h run. Each ACT checkpoint is roughly 620 MB (206 MB of fp32 weights plus AdamW's two
+moments), so all ten cost ~6 GB against 330 GB free. Halve `SAVE_FREQ` if you would rather
+trade disk for a shorter redo.
+
+Resume deliberately gets the **same `systemd-inhibit` wrapper** as `train` — picking a run back
+up is precisely when the machine is unattended.
+
+One asymmetry to know: on resume the **checkpoint's** config wins over CONFIG. Editing
+`BATCH_SIZE` or `STEPS` in the script and then resuming changes nothing; flags passed after
+`resume` are the only override.
+
+### Checkpoints that survive the machine
+
+Resume protects against a crash, not against losing the disk. If you want that — and you will
+in Phase C, where the GPU is rented and the pod is temporary — LeRobot can push every
+checkpoint as it is written:
+
+```bash
+./train_act.sh train --save_checkpoint_to_hub=true --policy.repo_id=chinmaykurade/act_cube_to_bowl
+```
+
+Then `lerobot-train --config_path=chinmaykurade/act_cube_to_bowl --resume=true` resumes from the
+Hub copy on *any* machine. It is off by default here because it uploads ~206 MB per checkpoint
+from a workstation whose disk is not going anywhere, and because each pushed checkpoint is
+public unless `--policy.private=true` — which is the kind of thing this repo makes a deliberate
+step rather than a default.
 
 ---
 

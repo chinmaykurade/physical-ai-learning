@@ -221,6 +221,25 @@ train_cmd() {
     "$@"
 }
 
+# Re-exec a long-running subcommand under a sleep/shutdown inhibitor. Scoped to the
+# job — nothing about the system's power configuration changes permanently, and the
+# block disappears when the run exits. GNOME's automatic suspend is already 'nothing'
+# on AC here (checked 2026-09-21), so this guards a manual suspend, a GNOME
+# power-menu shutdown, or that setting being changed later and forgotten.
+# Verify it took, from another terminal:  systemd-inhibit --list | grep train_act
+inhibit_reexec() {
+  local sub="$1"; shift
+  [[ -n "${_ACT_INHIBITED:-}" ]] && return 0
+  [[ "${WHERE}" == "local" ]] || return 0
+  command -v systemd-inhibit >/dev/null || return 0
+  exec env _ACT_INHIBITED=1 systemd-inhibit \
+    --what=sleep:idle:shutdown \
+    --who="train_act.sh" \
+    --why="ACT training: ${JOB_NAME}" \
+    --mode=block \
+    "$0" "${sub}" "$@"
+}
+
 cmd="${1:-info}"
 shift || true
 
@@ -321,21 +340,7 @@ PYEOF
     ;;
 
   train)
-    # Re-exec the whole run under a sleep/shutdown inhibitor. This is scoped to the
-    # job — nothing about the system's power configuration is changed permanently,
-    # and the block disappears when training exits. GNOME's automatic suspend is
-    # already 'nothing' on AC (checked 2026-09-21), so this is belt-and-braces
-    # against a manual suspend, a GNOME power-menu shutdown, or that setting being
-    # changed later and forgotten. Verify it took with:  systemd-inhibit --list
-    if [[ -z "${_ACT_INHIBITED:-}" && "${WHERE}" == "local" ]] && command -v systemd-inhibit >/dev/null; then
-      exec env _ACT_INHIBITED=1 systemd-inhibit \
-        --what=sleep:idle:shutdown \
-        --who="train_act.sh" \
-        --why="ACT training: ${JOB_NAME}, ~4-5 h" \
-        --mode=block \
-        "$0" train "$@"
-    fi
-
+    inhibit_reexec train "$@"
     preflight_env
     preflight_gpu
     echo
@@ -371,12 +376,34 @@ PYEOF
     ;;
 
   resume)
+    # Resume is exactly the case where an unattended machine must not sleep, so it
+    # gets the same inhibitor the first run had.
+    inhibit_reexec resume "$@"
     preflight_env
     cfg="${OUT_DIR}/checkpoints/last/pretrained_model/train_config.json"
-    [[ -f "${cfg}" ]] || die "no checkpoint at ${cfg} — nothing to resume"
+    [[ -f "${cfg}" ]] || die "no checkpoint at ${cfg} — nothing to resume
+       Checkpoints are written every ${SAVE_FREQ} steps; a run that died before the
+       first one has nothing to resume from and must be restarted."
     mkdir -p "${LOG_DIR}"
+
+    # Say how much work the interruption actually cost, before spending hours redoing it.
+    STEP_JSON="${OUT_DIR}/checkpoints/last/training_state/training_step.json" \
+    TOTAL_STEPS="${STEPS}" "${PY}" - <<'PYEOF' || true
+import json, os
+try:
+    step = json.load(open(os.environ["STEP_JSON"]))["step"]
+except Exception:
+    raise SystemExit
+total = int(os.environ["TOTAL_STEPS"])
+print(f"  resuming at step {step} of {total} — {100 * step / total:.0f}% done, {total - step} steps left")
+print(f"  at ~6.5 steps/s that is ~{(total - step) / 6.5 / 3600:.1f} h remaining")
+PYEOF
+
     bold "Resuming ${JOB_NAME} from ${OUT_DIR}/checkpoints/last"
-    warn "  CLI flags are ignored on resume except ones passed here; the checkpoint's config wins."
+    echo "  restores the step counter, optimizer, LR scheduler, RNG state and data order"
+    echo "  W&B continues the SAME run (the run id is stored in the checkpoint), not a new one"
+    warn "  the checkpoint's config wins — CONFIG edits since the first run are ignored"
+    warn "  unless passed as flags here."
     echo
     "${BIN}/lerobot-train" --config_path="${cfg}" --resume=true "$@" \
       2>&1 | tee -a "${LOG_DIR}/${JOB_NAME}.log"
