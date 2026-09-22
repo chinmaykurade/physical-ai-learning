@@ -49,7 +49,7 @@ Nothing in the script overrides ACT's architecture. Those come from
 
 | | |
 |---|---|
-| `chunk_size` / `n_action_steps` | 100 / 100 — the policy predicts 100 actions and executes all 100 (3.3 s at 30 fps) |
+| `chunk_size` / `n_action_steps` | 100 / 100 — the policy predicts 100 actions and executes all 100 (3.3 s at 30 fps). `chunk_size` is architecture and fixed once trained; `n_action_steps` is overridden at evaluation time (`N_ACTION_STEPS` in `evaluation/run_policy.sh`) |
 | `vision_backbone` | `resnet18`, ImageNet-pretrained, **one per camera** |
 | `dim_model` / `n_heads` | 512 / 8, 4 encoder layers, 1 decoder layer |
 | `use_vae` / `kl_weight` | true / 10.0 — the CVAE objective the paper's "style variable" comes from |

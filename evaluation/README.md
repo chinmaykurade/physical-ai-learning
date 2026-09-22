@@ -27,10 +27,13 @@ The follower moves **by itself**. The leader is not connected and grabbing it do
 - Clear the workspace of everything except the cube and the bowl.
 - Hand on the **12 V supply switch** — that is the stop button. Stand where you can reach it
   without leaning across the arm.
-- **ACT is open-loop for 3.3 seconds at a time.** `n_action_steps=100` at 30 fps means each
-  inference commits to 100 actions and executes all of them before looking at a camera again.
-  A trajectory heading somewhere wrong will not correct itself inside that window. This is the
-  single most important thing to know the first time you watch it run.
+- **ACT is open-loop between inferences.** Each inference commits to `n_action_steps` actions
+  and executes all of them before looking at a camera again; a trajectory heading somewhere
+  wrong will not correct itself inside that window. The checkpoint's own value is 100 — 3.3 s
+  at 30 fps — but `N_ACTION_STEPS` in `run_policy.sh` overrides it at inference time and is
+  set to **20 (0.67 s)**. `run_policy.sh info` prints the window in seconds, and the
+  confirmation prompt repeats it. This is the single most important thing to know the first
+  time you watch it run.
 - **Esc, not Ctrl-C.** `return_to_initial_position` is on by default and returns the arm
   smoothly to its startup pose — but only on a clean shutdown. Ctrl-C leaves it wherever it
   stopped, still under torque.

@@ -6,6 +6,7 @@
 #
 #   ./run_policy.sh info     # resolved config: which checkpoint, which cameras, which ports
 #   ./run_policy.sh check    # preflight: hardware, calibration, and POLICY/CAMERA KEY MATCH
+#   ./run_policy.sh probe    # what does the policy COMMAND right now? Arm never moves
 #   ./run_policy.sh dry      # ONE short autonomous run, records nothing. Do this first
 #   ./run_policy.sh eval     # the 10 scored trials, recorded to a dataset
 #   ./run_policy.sh score    # tally successes into an evaluation log (the Phase-A deliverable)
@@ -17,10 +18,11 @@
 #   - Clear the workspace of everything except the cube and the bowl.
 #   - Keep a hand on the 12 V supply switch. That is the stop button.
 #   - Stand where you can reach it without reaching across the arm.
-#   - ACT commits to `n_action_steps` actions per inference — 100 steps at 30 fps
-#     is 3.3 SECONDS of open-loop motion. A bad trajectory will not self-correct
-#     inside that window. This is the single most important thing to know before
-#     watching it move for the first time.
+#   - ACT commits to `n_action_steps` actions per inference and is BLIND for all
+#     of them. See N_ACTION_STEPS in CONFIG for the horizon this run uses; `info`
+#     prints it in seconds. A bad trajectory will not self-correct inside that
+#     window. This is the single most important thing to know before watching it
+#     move for the first time.
 #
 # Ctrl-C leaves the arm wherever it stopped, under torque. `return_to_initial_position`
 # (on by default) only runs on a clean shutdown — Esc, not Ctrl-C.
@@ -67,12 +69,34 @@ EPISODE_TIME_S=15      # a little longer than recording's 12: a policy may hesit
 RESET_TIME_S=10        # you are replacing the cube by hand between trials
 FPS=30
 
+# --- Open-loop horizon. `chunk_size` (100) is ARCHITECTURE: it is baked into the
+# checkpoint at training time and cannot be lowered here — the decoder has 100
+# action slots. What IS an inference-time knob is how many of those 100 predicted
+# actions get executed before the policy looks at the cameras again. Lowering it
+# re-plans more often on fresher observations, which is what "more accurate" means
+# in practice for ACT; the network is untouched. 20 at 30 fps = re-plan every
+# 0.66 s instead of every 3.3 s. Costs one extra forward pass per 20 steps, which
+# the 3080 has headroom for at 30 fps.
+#
+# Must be <= 100 or lerobot refuses to build the config. The tradeoff at the low
+# end is chunk-boundary jerk: consecutive chunks disagree slightly and stitching
+# them every 0.66 s can visibly stutter. If that shows up, that is exactly what
+# TEMPORAL_ENSEMBLE below is for. Leave empty to use the checkpoint's own 100.
+N_ACTION_STEPS=60
+
 # --- Temporal ensembling. OFF, matching training. Turning it on queries the policy
 # every step and exponentially averages overlapping chunks, which usually smooths
 # chunk-boundary jerk at the cost of 100x more inference calls. It is an
 # inference-time switch — the SAME checkpoint works either way, so it is worth a
-# second pass if the arm twitches every 3.3 s. n_action_steps MUST be 1 with it.
+# second pass if the arm twitches at chunk boundaries. n_action_steps MUST be 1
+# with it, so it overrides N_ACTION_STEPS above.
 TEMPORAL_ENSEMBLE=false
+
+# --- The training dataset. Only `probe` uses it: normalizer stats come from here,
+# and they must be the SAME dataset the checkpoint was trained on or the probe's
+# numbers are meaningless.
+TRAIN_REPO_ID=chinmaykurade/so101_cube_to_bowl_50
+TRAIN_DATASET_ROOT_NAME=so101_cube_to_bowl_50
 
 # --- Where the recorded trials land. Kept local; publication is a separate step.
 HF_USER=chinmaykurade
@@ -183,7 +207,10 @@ policy_args() {
   local path="$1"
   printf '%s\0' "--policy.path=${path}" "--policy.device=cuda"
   if [[ "${TEMPORAL_ENSEMBLE}" == "true" ]]; then
+    # Ensembling queries the policy every step, so the horizon knob does not apply.
     printf '%s\0' "--policy.temporal_ensemble_coeff=0.01" "--policy.n_action_steps=1"
+  elif [[ -n "${N_ACTION_STEPS}" ]]; then
+    printf '%s\0' "--policy.n_action_steps=${N_ACTION_STEPS}"
   fi
 }
 
@@ -195,12 +222,24 @@ robot_args() {
     "--robot.cameras=$(cameras_json)"
 }
 
+# How long the arm is blind between inferences, in the units that matter on the
+# bench. Reads the checkpoint's 100 when N_ACTION_STEPS is left empty.
+open_loop_desc() {
+  if [[ "${TEMPORAL_ENSEMBLE}" == "true" ]]; then
+    echo "1 step (temporal ensembling — re-plans every frame)"
+    return
+  fi
+  local n="${N_ACTION_STEPS:-100}"
+  printf '%s steps = %.2f s per inference (chunk_size 100)\n' \
+    "${n}" "$(${PY} -c "print(${n}/${FPS})")"
+}
+
 confirm_arm_will_move() {
   warn "=============================================================="
   warn " The follower arm is about to move ON ITS OWN."
   warn "   - workspace clear except the cube and the bowl?"
   warn "   - hand on the 12 V switch, reachable without leaning over the arm?"
-  warn "   - ACT runs ~3.3 s of motion open-loop per inference."
+  warn "   - open-loop window: $(open_loop_desc)"
   warn "=============================================================="
   read -r -p "Ready? [y/N] " reply
   [[ "${reply}" == [yY] ]] || die "aborted — nothing ran"
@@ -220,6 +259,7 @@ case "${cmd}" in
       "cameras"     "$(cameras_json)" \
       "task"        "${TASK}" \
       "trials"      "${NUM_TRIALS} × ${EPISODE_TIME_S}s (+${RESET_TIME_S}s reset) @ ${FPS} fps" \
+      "open-loop"   "$(open_loop_desc)" \
       "ensembling"  "${TEMPORAL_ENSEMBLE}" \
       "records to"  "${EVAL_ROOT}"
     echo
@@ -227,6 +267,7 @@ case "${cmd}" in
     verify_feature_match "${policy_path}" || true
     echo
     bold "Order:  $0 check  →  $0 dry  →  $0 eval  →  $0 score"
+    echo "  Arm sitting still during \`dry\`?  $0 probe  (moves nothing)"
     ;;
 
   check)
@@ -241,6 +282,38 @@ case "${cmd}" in
     echo
     bold "Preflight passed. The arm has not moved."
     echo "  Next: $0 dry"
+    ;;
+
+  probe)
+    # Reads the arm and the cameras, runs the policy, prints the commanded goal
+    # against the present position, and SENDS NOTHING. Safe with the arm powered.
+    preflight
+    policy_path="$(resolve_policy)"
+    verify_feature_match "${policy_path}" >/dev/null \
+      || die "camera names do not match the policy — run '$0 check'"
+
+    bold "Probing the policy against live observations — the arm will NOT move"
+    echo
+    cam_flags=()
+    for entry in "${CAMERAS[@]}"; do cam_flags+=(--camera "${entry}"); done
+    frames_dir="${REPO_ROOT}/outputs/probe_frames"
+
+    "${PY}" "${REPO_ROOT}/evaluation/probe_live.py" \
+      --policy-path="${policy_path}" \
+      --port="${FOLLOWER_PORT}" \
+      --robot-id="${FOLLOWER_ID}" \
+      "${cam_flags[@]}" \
+      --width="${CAM_WIDTH}" --height="${CAM_HEIGHT}" --fps="${CAM_FPS}" \
+      --repo-id="${TRAIN_REPO_ID}" \
+      --dataset-root="${REPO_ROOT}/datasets/${TRAIN_DATASET_ROOT_NAME}" \
+      --task="${TASK}" \
+      --save-frames="${frames_dir}" \
+      "$@"
+
+    echo
+    echo "  Move the arm by hand to a different pose and run this again. The commanded"
+    echo "  goal should change with the pose. If it does not, the policy is ignoring"
+    echo "  its observations."
     ;;
 
   dry)
@@ -374,6 +447,6 @@ case "${cmd}" in
     ;;
 
   *)
-    die "unknown subcommand '${cmd}'. One of: info check dry eval score"
+    die "unknown subcommand '${cmd}'. One of: info check probe dry eval score"
     ;;
 esac

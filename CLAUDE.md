@@ -58,7 +58,7 @@ phase, every task across Phases 0–F with its status, the goals G1–G7, and de
 
 ## Progress-tracking process
 
-Three files, three jobs — keep them from drifting:
+Four files, four jobs — keep them from drifting:
 
 - **`docs/progress.md`** — task status and *where I am now*. Flip a status the day it
   changes, not at gate time. Statuses: ☐ not started · ◐ in progress · ☑ done · ⤴ moved to
@@ -66,6 +66,8 @@ Three files, three jobs — keep them from drifting:
 - **`docs/backlog.md`** — deferred items, the stretch watchlist, and the gate review log.
 - **`notes/`** — the Saturday 30-minute log and the G7 writeups. Prose lives here, never in
   the tracker.
+- **`notes/learnings.md`** — the debugging war stories, written to be retellable in an
+  interview. Cumulative and undated, unlike the dated logs beside it.
 
 When an item slips past its phase exit: set it ⤴ in progress.md **and** write the row into
 backlog.md with tag, target and date. The ⤴ is a pointer; backlog.md is the record. Never
@@ -73,6 +75,27 @@ edit a depth tag in place — a [Deep]→[Read] demotion is written as a demotio
 
 At a phase gate: run roadmap §8 rule 5 (core done? backlog groomed? artifact shipped?), fill
 the backlog.md gate row, update **Where I am now** in progress.md, then advance.
+
+### Recording a learning
+
+**When a problem turns out to have a non-obvious root cause, write an entry in
+`notes/learnings.md` before moving on.** The trigger is the gap between the obvious
+explanation and the real one — not how long the bug took. If the first plausible hypothesis
+was right, it is not a learning; it is just work, and it belongs in the dated log.
+
+Each entry follows the file's format: **symptom → what was ruled out → root cause → fix → why
+it generalizes.** Three things make an entry worth having:
+
+- **Keep the wrong turns in.** Hypotheses that were plausible, checkable and wrong are the
+  part that demonstrates method. Deleting them leaves a story where the answer was obvious.
+- **Keep the numbers.** The measured MAE, the frame counts, the profile table. "It was an
+  out-of-distribution problem" is not retellable; "the demos open with a 1.33 s pause, median
+  40 frames" is.
+- **Say how each suspect was eliminated**, not just that it was. A table of
+  suspect → the measurement that killed it is usually the densest way.
+
+Entries are numbered `L1`, `L2`, … and never renumbered. Cross-link the dated `notes/` file
+and the code involved.
 
 ## Standing rules (roadmap §8 — respect these in every session)
 
@@ -113,6 +136,8 @@ model checkpoints move, and much of the work is "how do I set up X". So:
   ~65-item reading queue, the LeRobot code-reading plan.
 - [docs/backlog.md](docs/backlog.md) — **owns deferred items and gate history**: active
   backlog, stretch watchlist, gate review log, one-in-flight tracker.
+- [notes/learnings.md](notes/learnings.md) — **owns the debugging war stories**: non-obvious
+  root causes, written for retelling. See *Recording a learning* above for when to add one.
 - [env/README.md](env/README.md) — environment path and regeneration. `notes/` — weekly
   logs and G7 writeups.
 - **Notion mirror** — `docs/progress.md` and `docs/backlog.md` are mirrored to a
@@ -124,5 +149,6 @@ model checkpoints move, and much of the work is "how do I set up X". So:
 
 ## Maintaining this file
 
-Update CLAUDE.md **only at phase gates, or when a pin or a hardware fact changes.** It is
-durable context, not a status board — day-to-day progress belongs in `docs/progress.md`.
+Update CLAUDE.md **only at phase gates, when a pin or a hardware fact changes, or when a
+process rule here changes.** It is durable context, not a status board — day-to-day progress
+belongs in `docs/progress.md`.
