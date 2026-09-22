@@ -33,17 +33,25 @@ set -euo pipefail
 
 VENV=/home/chinmay/lerobot-env
 
-# --- Which dataset. Must match the CONFIG block in ../data_collection/record_episodes.sh.
+# --- Which dataset. Must match the CONFIG block in ../data_collection/record_episodes.sh,
+# or — as now — the DST_NAME in ../data_collection/trim_dataset.sh.
+#
+# so101_cube_to_bowl_50_trimmed is the recorded 50 episodes with the operator's settling
+# pause cut off the head of each one: 16505 frames instead of 17953. The untrimmed
+# dataset taught ACT a 1.1 s pause at the start of every episode, which under action
+# chunking is an absorbing state — the arm executes the pause, the observation never
+# changes, and the next chunk prescribes the same pause (notes/learnings.md, L1). Point
+# this back at so101_cube_to_bowl_50 only to reproduce that failure deliberately.
 HF_USER=chinmaykurade
-DATASET_NAME=so101_cube_to_bowl_50
+DATASET_NAME=so101_cube_to_bowl_50_trimmed
 
 # --- Job identity. JOB_NAME names the output dir, the log, and the W&B run, so
 # changing it is how you keep two experiments apart (lerobot REFUSES to reuse an
 # existing output_dir unless resuming).
-JOB_NAME=act_cube_to_bowl
+JOB_NAME=act_cube_to_bowl_trimmed
 
-# --- Training length. lerobot's default is 100k. With 50 episodes / ~18k frames
-# that is ~45 epochs; ACT on a dataset this size is typically converged well before
+# --- Training length. lerobot's default is 100k. With 50 episodes / ~16.5k frames
+# that is ~48 epochs; ACT on a dataset this size is typically converged well before
 # the end, which is what SAVE_FREQ + the held-out eval loss are for — you pick the
 # checkpoint afterwards rather than trusting the last one.
 STEPS=100000
@@ -69,6 +77,11 @@ RETURN_UINT8=false
 # quantitative signal before the 10-trial real-robot eval (G2). It costs 5 training
 # episodes; read README.md before changing it — a BC eval loss tracks overfitting
 # well and task success only loosely.
+#
+# Left at 0.1 for the trimmed run so the same 5 episodes are held out as before.
+# The two runs' eval losses are still not directly comparable — the trimmed set has
+# 8% fewer frames and none of them are the trivially-predictable idle ones — so read
+# the trimmed loss against itself over training, not against the 0.045 of the first run.
 EVAL_SPLIT=0.1
 EVAL_STEPS=2000
 

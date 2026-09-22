@@ -2,6 +2,8 @@
 
 Recording demonstrations on the SO-101 rig: the procedure, the gotchas, and
 [`record_episodes.sh`](record_episodes.sh), which wraps it so nothing has to be retyped.
+Then [`trim_dataset.sh`](trim_dataset.sh), which cuts the operator's settling pause off the
+head of every recorded episode — see [Trimming the idle frames](#trimming-the-idle-frames--trim_datasetsh).
 
 Companion to [../calibration/README.md](../calibration/README.md) — a recording is only
 interpretable next to the calibration that produced it. Task status lives in
@@ -259,6 +261,129 @@ everywhere else. `./record_episodes.sh info` and `view` get this right for you.
 Rough sizing at 640×480, 2 cameras, h264: a few MB per episode, so **~300–500 MB for the
 50-episode Phase-A set** and **1–2 GB** once Phase B's 10/25/50/100 re-records land beside
 it.
+
+---
+
+## Trimming the idle frames — `trim_dataset.sh`
+
+The bullet above about hesitation is not advice, it is a bug report written in advance.
+Every one of the 50 recorded episodes opens with the operator settling their hand on the
+leader before teleoperating: **median 34 frames, 1.1 s of the arm sitting still**. ACT
+learned it, and under action chunking a learned pause at the head of an episode is an
+**absorbing state** — the rollout executes the pause, the arm does not move, the
+observation does not change, and the next chunk prescribes the same pause. Forever. The
+arm never starts. Full write-up in [../notes/learnings.md](../notes/learnings.md) (L1).
+
+[`trim_dataset.sh`](trim_dataset.sh) builds a copy with that head cut off:
+
+```bash
+./trim_dataset.sh info      # resolved config + the train command that matches it
+./trim_dataset.sh profile   # idle frames per episode at each threshold. Writes nothing
+./trim_dataset.sh smoke     # same pipeline over 3 episodes into a throwaway dataset
+./trim_dataset.sh build     # write the trimmed dataset, then verify it
+./trim_dataset.sh verify    # re-check an already-built dataset against the source
+```
+
+**The trim is per-episode, computed from the data:**
+
+```
+onset = first frame where max|action - observation.state[frame 0]| > THRESHOLD   (2.0°)
+trim  = max(0, onset - MARGIN)                                                   (3 frames)
+```
+
+measured against *that* episode's own starting pose. It is deliberately not a fixed offset
+in seconds. `profile` shows why:
+
+| threshold | median | mean | min | max | frames cut |
+|---|---|---|---|---|---|
+| 0.5° | 13 | 13.4 | 0 | 37 | 669 (3.7%) |
+| 1.0° | 28.5 | 27.2 | 0 | 85 | 1358 (7.6%) |
+| **2.0°** | **34** | **31.9** | **0** | **91** | **1595 (8.9%)** |
+| 5.0° | 35.5 | 34.3 | 0 | 93 | 1713 (9.5%) |
+| 10.0° | 40 | 37.7 | 12 | 94 | 1887 (10.5%) |
+
+**`min = 0` is the load-bearing entry.** At least one episode starts moving on frame 0, so
+any global offset would eat the opening of its reach. The spread runs 0 to 91 frames — 0 to
+3 seconds.
+
+2.0° sits in the flat part of the curve (1°→5° moves the median by 8 frames), which is what
+"the threshold is not critical" looks like. Servo read noise on this rig is ~0.1°.
+
+The **3-frame margin is the only fixed quantity**, and it is kept in front of each onset on
+purpose: the policy should see *"arm at rest, move now"*, not *"arm already mid-reach"*. A
+dataset whose every episode opens mid-motion contains no example of starting from a
+standstill, which is the exact state a rollout begins in.
+
+**The tail is not trimmed.** Stillness after the cube lands teaches the policy to stop,
+which is wanted. Only the head is idle by accident.
+
+### Result
+
+```
+50 episodes, 17953 → 16505 frames (1448 cut, 8.1%), lengths 271–358
+220 MB → 190 MB, 5.1 min wall clock
+```
+
+### Why it rebuilds rather than edits
+
+v3.0 concatenates all 50 episodes into **one** shared parquet and **one** shared mp4 per
+camera, with frame ranges, per-episode metadata and dataset stats all pointing into them.
+Editing any one desynchronises the rest. So the trim goes through the authoring API —
+`LeRobotDataset.create()` → `add_frame()` → `save_episode()` → `finalize()` — which
+recomputes `meta/episodes/`, `stats.json` and `info.json` from scratch. Three traps on that
+path, all of which cost real time to find:
+
+- **`add_frame` validates against the *declared* feature shape, which is HWC.**
+  `__getitem__` returns video as CHW. `validate_feature_image_or_video` unpacks the
+  declared `(480,640,3)` as `c,h,w`, so the forms it accepts are `(480,640,3)` and
+  `(640,3,480)` — and `(3,480,640)` is neither. Hence the permute. Pair it with
+  `LeRobotDataset(..., return_uint8=True)` so frames make the round trip as uint8 rather
+  than float-in-[0,1] scaled back up by the image writer.
+- **`streaming_encoding=True` drops frames when the encoder queue fills.** That is the
+  right trade at 30 fps against a live camera, and the wrong one here, where frames arrive
+  as fast as torchcodec can decode them. The trim uses the PNG-then-encode path: slower,
+  and it cannot silently lose a frame.
+- **`push_to_hub` does not apply.** The authoring API has no such flag, so unlike
+  `lerobot-record` and `lerobot-rollout` there is nothing to explicitly set false.
+  Publication stays a separate, deliberate step ([`push_dataset.sh`](push_dataset.sh)).
+
+**The source dataset is never modified** — it is the published D3 artifact, and it is
+opened read-only. `create()` refuses to write into an existing root, which is the guardrail.
+
+Frames are re-encoded, so the video takes one extra AV1 generation at the same settings
+(av1 / yuv420p / crf 30 / preset 12 / g 2 — `verify` diffs them against the source).
+Measured drift: **1.35/255 mean absolute per pixel**. Not a bit-exact copy, and worth
+knowing before anyone compares the two datasets pixel-wise.
+
+### Verify is not optional
+
+A rebuild that drops or misaligns one frame produces a dataset that trains perfectly well
+and behaves wrong, with nothing in any log to say so. `build` runs `verify` automatically;
+all 12 checks passed on the real build:
+
+```
+[ok] episode count preserved                          50 -> 50
+[ok] frame count matches the trim plan                17953 - 1448 = 16505
+[ok] feature schema unchanged
+[ok] fps unchanged
+[ok] encoder settings match source                    (both cameras)
+[ok] episode lengths match the per-episode trim
+[ok] frame 0 state  == source frame at the trim point
+[ok] frame 0 action == source frame at the trim point
+[ok] task string preserved
+[ok] last frame of each episode unchanged             (tail not trimmed)
+[ok] video frame 0 matches the source frame it came from   1.35/255 mean |Δpixel|
+[ok] residual pause is at most the margin plus a frame     max 3 frames
+```
+
+### Then retrain, and check the profile before trusting it
+
+Set `DATASET_NAME` and a fresh `JOB_NAME` in
+[`../training/train_act.sh`](../training/train_act.sh) — both are already pointed at the
+trimmed dataset. The acceptance test is
+[`../evaluation/chunk_profile.py`](../evaluation/chunk_profile.py): the retrained policy's
+chunk must **ramp from k=1** at an episode start. If it is still flat through k=20, the
+trim threshold was too low or the margin too generous — rebuild before training again.
 
 ---
 

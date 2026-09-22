@@ -102,6 +102,59 @@ at the end, so the final checkpoint is also the best one.
 
 ---
 
+## `chunk_profile.py` — the offline chunk profile
+
+[`chunk_profile.py`](chunk_profile.py) is `probe probe`'s measurement without the hardware:
+it feeds the policy a **recorded** observation and asks how far the commanded position has
+moved by step *k* of the chunk.
+
+```bash
+/home/chinmay/lerobot-env/bin/python chunk_profile.py \
+  --policy-path ../outputs/train/<job>/checkpoints/<step>/pretrained_model \
+  --repo-id <hf_user>/<dataset> --dataset-root ../datasets/<dataset>
+```
+
+It reports two columns, and the difference between them matters:
+
+| | definition | what it means |
+|---|---|---|
+| `reach` | `max｜chunk[k] − observation.state｜` | what the servo is asked to close. The number `probe` prints live |
+| `travel` | `max｜chunk[k] − chunk[0]｜` | how far the chunk moves from its own first command |
+
+**Read `travel`.** `reach` carries a constant the deadlock argument does not: `action` is
+the *leader* arm's pose and `observation.state` is the *follower*'s, and the follower lags
+under load, so `|action − state|` sits at up to ~9° on some episodes with everything
+motionless. That standing offset makes a flat chunk look less flat than it is. `travel`
+starts at exactly 0 by construction and grows only when the policy prescribes real motion.
+
+The recorded demonstration is profiled from the same frame under the same definition, so
+the comparison is direct: **if the policy is flat and the demo is flat, the policy is right
+and the data is wrong.** That is precisely how L1 was settled.
+
+`--at start|mid|both` picks the pose. This is not cosmetic — a chunk predicted at an
+episode start behaves nothing like one predicted mid-reach, and comparing the two is what
+sent the original debugging session after the wrong root cause. Measured on the untrimmed
+100k checkpoint, mean over 10 episodes:
+
+| k | time | travel @ start | travel @ mid |
+|---|---|---|---|
+| 1 | 0.03s | 0.00 | 0.00 |
+| 10 | 0.33s | 0.64 | 18.80 |
+| 20 | 0.67s | 6.76 | 43.28 |
+| 30 | 1.00s | 18.81 | 68.01 |
+| 50 | 1.67s | 62.52 | 105.01 |
+
+Motionless for the first third of a second at a start pose; 18.8° by the same step
+mid-reach. Worst case across those episodes, the chunk travelled under 10° until **step
+50** — which is why `N_ACTION_STEPS` below ~40 deadlocked.
+
+It exits non-zero when the start-pose chunk is still flat past step 20, so it can gate a
+retrain in a script rather than being eyeballed. It also prints `REF_START` / `REF_MID`
+blocks ready to paste into [`probe_live.py`](probe_live.py), whose constants go stale the
+moment a new checkpoint exists.
+
+---
+
 ## If it does badly
 
 Eval loss and task success agree only loosely for behaviour cloning, so a low loss and a bad

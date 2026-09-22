@@ -131,6 +131,49 @@ The fix is in the **data**, not the config.
    pulls in older chunks whose later indices are already past the pause. The 1.3 s dead period
    at the start remains.
 
+### Follow-up — the fix, half-built (2026-09-22)
+
+Fix 1 is built and verified; the retrain has not run yet, so **this entry does not yet say
+whether trimming actually cured the deadlock.** What exists:
+
+`data_collection/trim_dataset.sh` writes a trimmed copy of the dataset — per-episode, from
+the data, never a fixed offset:
+
+```
+onset = first frame where max|action - observation.state[frame 0]| > 2.0 deg
+trim  = max(0, onset - 3)
+```
+
+**17953 → 16505 frames, 1448 cut (8.1%), 50 episodes intact**, 5.1 min. The onset spread is
+0 to 91 frames: one episode starts moving on frame 0, so any global cut would have eaten
+the opening of its reach. The 3-frame margin is deliberate — the policy needs examples of
+starting *from a standstill*, which is the state a rollout actually begins in.
+
+Two things worth keeping from building it:
+
+**The metric in the table above has a confound.** `|commanded - present pose|` never reaches
+zero at rest, because `action` is the **leader** arm's pose and `observation.state` is the
+**follower**'s, and the follower lags under load. On episode 0 that standing offset is
+**8.79 deg** — flat across the entire pause, and most of the way to the 10 deg threshold the
+deadlock check uses. A chunk that prescribes no motion at all can therefore read as almost
+"unflat". The clean measure is the chunk's travel away from *its own* first command,
+`|chunk[k] - chunk[0]|`, which is 0 by construction and grows only on real motion.
+`evaluation/chunk_profile.py` prints both. Measured that way on the same checkpoint, mean
+over 10 episodes: **0.64 deg by k=10 at an episode start, 18.80 deg by k=10 mid-reach.** Same
+conclusion as the original table, now on a number that cannot be inflated by a tracking
+offset — and reproducible, where the table above was one unrecorded episode.
+
+> **Lesson, and it is the same one as before, one level down:** the *baseline* was the
+> confound last time; this time it was the *metric*. Both were "the right measurement taken
+> against the wrong zero."
+
+**`streaming_encoding=True` drops frames when the encoder queue fills.** It is what
+`record_episodes.sh` uses, correctly, at 30 fps against a live camera — dropping a frame
+beats crashing a recording session. Rebuilding a dataset offline feeds frames as fast as
+torchcodec decodes them, so that same setting would have silently produced a dataset short
+an unknown number of frames, with every metadata file self-consistent and nothing in any
+log. Read what a flag does under *your* load, not under the load it was written for.
+
 ### Why it generalizes
 
 - **Idle time in demonstrations is not neutral.** Behaviour cloning learns the idle along with

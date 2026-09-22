@@ -27,7 +27,7 @@ VENV=/home/chinmay/lerobot-env
 
 # --- What to publish. Must match the CONFIG block in record_episodes.sh.
 HF_USER=chinmaykurade
-DATASET_NAME=so101_cube_to_bowl_50
+DATASET_NAME=so101_cube_to_bowl_50_trimmed
 
 # --- Visibility. false = public. There is no undo; see the warning above.
 PRIVATE=false
