@@ -11,6 +11,7 @@
 #   ./train_act.sh train    # the real overnight run
 #   ./train_act.sh resume   # continue the last run from its newest checkpoint
 #   ./train_act.sh best     # rank the checkpoints by held-out eval loss and name the winner
+#                           #   --quiet prints just the winning step, for other scripts
 #   ./train_act.sh push     # upload a chosen checkpoint to the Hub (deliberate, like push_dataset.sh)
 #                           #   ./train_act.sh push best   resolves the winner automatically
 #
@@ -475,6 +476,12 @@ PYEOF
     ;;
 
   best)
+    # --quiet prints only the winning step, so other scripts (evaluation/run_policy.sh)
+    # can resolve "the best checkpoint" without reaching into this file's internals.
+    if [[ "${1:-}" == "--quiet" ]]; then
+      QUIET=1 rank_checkpoints
+      exit 0
+    fi
     bold "Checkpoints ranked by held-out eval loss"
     rank_checkpoints
     echo
