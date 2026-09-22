@@ -10,7 +10,9 @@
 #   ./train_act.sh smoke    # 500 throwaway steps; measures it/s and peak VRAM, estimates the full run
 #   ./train_act.sh train    # the real overnight run
 #   ./train_act.sh resume   # continue the last run from its newest checkpoint
+#   ./train_act.sh best     # rank the checkpoints by held-out eval loss and name the winner
 #   ./train_act.sh push     # upload a chosen checkpoint to the Hub (deliberate, like push_dataset.sh)
+#                           #   ./train_act.sh push best   resolves the winner automatically
 #
 # ACT reads its input features FROM THE DATASET: every observation.images.* key
 # present becomes a camera stream with its own ResNet18 backbone. This dataset has
@@ -192,6 +194,69 @@ for k, v in cams.items():
     print(f"    {k:<28} {w}x{h}  codec={v['info']['video.codec']}")
 if len(cams) < 2:
     print("  WARNING: fewer than 2 cameras — this is not the both-cameras run.")
+PYEOF
+}
+
+# Rank the written checkpoints by their held-out eval loss, parsed out of the run
+# log. lerobot has NO best-checkpoint tracking of its own — grep the train script
+# for "best" and nothing comes back — so picking one is a post-hoc job, and this is
+# it. SAVE_FREQ is a multiple of EVAL_STEPS, so every checkpoint step also has an
+# eval point; the resume path appends to the same log, so later lines win.
+#
+# Prints a table. With QUIET=1 it prints only the winning step, for `push best`.
+rank_checkpoints() {
+  LOG_FILE="${LOG_DIR}/${JOB_NAME}.log" CKPT_DIR="${OUT_DIR}/checkpoints" \
+  QUIET="${QUIET:-0}" "${PY}" - <<'PYEOF'
+import os, re, sys
+from pathlib import Path
+
+log = Path(os.environ["LOG_FILE"])
+ckpt_dir = Path(os.environ["CKPT_DIR"])
+quiet = os.environ["QUIET"] == "1"
+
+if not ckpt_dir.is_dir():
+    sys.exit(f"error: no checkpoints at {ckpt_dir} — has the run finished a save step?")
+
+steps = sorted(int(d.name) for d in ckpt_dir.iterdir() if d.is_dir() and d.name.isdigit())
+if not steps:
+    sys.exit(f"error: no numbered checkpoints in {ckpt_dir}")
+
+losses = {}
+if log.is_file():
+    for m in re.finditer(r"step (\d+): eval_loss=([0-9.]+)", log.read_text(errors="replace")):
+        losses[int(m.group(1))] = float(m.group(2))   # later lines win, so a resume overrides
+
+scored = [(st, losses[st]) for st in steps if st in losses]
+if not scored:
+    sys.exit(
+        f"error: no eval_loss for any checkpoint in {log}.\n"
+        "       EVAL_SPLIT=0.0 disables the held-out loss, and without it there is no\n"
+        "       basis to rank checkpoints — pick by hand, or re-run with a split."
+    )
+
+best_step, best_loss = min(scored, key=lambda x: x[1])
+
+if quiet:
+    print(best_step)
+    sys.exit(0)
+
+print(f"  {'step':>8}  {'eval_loss':>10}")
+for st, ls in scored:
+    mark = "  <- best" if st == best_step else ""
+    print(f"  {st:>8}  {ls:>10.4f}{mark}")
+
+missing = [st for st in steps if st not in losses]
+if missing:
+    print(f"\n  no eval point for: {', '.join(str(m) for m in missing)}")
+
+last_step, last_loss = scored[-1]
+print(f"\n  best   step {best_step}, eval_loss {best_loss:.4f}")
+if best_step != last_step:
+    print(f"  final  step {last_step}, eval_loss {last_loss:.4f}  ({last_loss - best_loss:+.4f}) — overfitting past {best_step}")
+else:
+    print("  the last checkpoint is also the best — the run had not started overfitting.")
+print("\n  Eval loss picks the checkpoint; the 10 real trials decide G2. For behaviour")
+print("  cloning the two agree only loosely, so evaluate the runner-up if the best disappoints.")
 PYEOF
 }
 
@@ -409,9 +474,20 @@ PYEOF
       2>&1 | tee -a "${LOG_DIR}/${JOB_NAME}.log"
     ;;
 
+  best)
+    bold "Checkpoints ranked by held-out eval loss"
+    rank_checkpoints
+    echo
+    bold "Publish it with:  $0 push best"
+    ;;
+
   push)
     load_dotenv
     ckpt="${1:-last}"
+    if [[ "${ckpt}" == "best" ]]; then
+      ckpt="$(QUIET=1 rank_checkpoints)" || die "could not resolve the best checkpoint — run '$0 best'"
+      echo "  best checkpoint by eval loss: step ${ckpt}"
+    fi
     src="${OUT_DIR}/checkpoints/${ckpt}/pretrained_model"
     [[ -d "${src}" ]] || die "no checkpoint '${ckpt}' at ${src}
        available: $(ls "${OUT_DIR}/checkpoints" 2>/dev/null | tr '\n' ' ')"
@@ -430,6 +506,6 @@ PYEOF
     ;;
 
   *)
-    die "unknown subcommand '${cmd}'. One of: info check smoke train resume push"
+    die "unknown subcommand '${cmd}'. One of: info check smoke train resume best push"
     ;;
 esac

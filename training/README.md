@@ -256,6 +256,40 @@ One asymmetry to know: on resume the **checkpoint's** config wins over CONFIG. E
 `BATCH_SIZE` or `STEPS` in the script and then resuming changes nothing; flags passed after
 `resume` are the only override.
 
+### Why `--wandb.disable_artifact=true`, and where the best checkpoint goes
+
+Not a storage-cost argument — W&B's free personal tier is 100 GB and a full run's ten ACT
+checkpoints are ~2 GB. The reason is that **the artifact would not be loadable.**
+
+Read `WandBLogger.log_policy` in `lerobot/common/wandb_utils.py`. For a PEFT model it adds
+`adapter_model.safetensors`, `adapter_config.json` **and `config.json`**. For a standard model —
+which ACT is — it adds `model.safetensors` and nothing else. No `config.json`, no processor
+files, no `train_config.json`. You would get a 206 MB tensor blob that
+`lerobot-rollout --policy.path=` cannot open, and you would have to reunite it with a config by
+hand to use it.
+
+The Hub path uploads the whole `pretrained_model/` directory — policy config, train config,
+pre/post-processor state, generated model card — and `--policy.path=<repo_id>` loads it
+directly. That is how the G2 evaluation actually runs, so that is where weights belong.
+
+**"At least the best one" is not something LeRobot can do for you.** There is no
+best-checkpoint tracking anywhere in `lerobot_train.py` — no `best`, no `min_loss`, no `is_best`.
+It writes every `save_freq` unconditionally. Picking one is necessarily post-hoc:
+
+```bash
+./train_act.sh best        # rank every checkpoint by its held-out eval loss
+./train_act.sh push best   # publish the winner (resolves the step for you)
+```
+
+`best` parses `eval_loss` out of the run log, joins it to the checkpoints actually on disk, and
+names the winner. `SAVE_FREQ` is a multiple of `EVAL_STEPS`, so every checkpoint step has an
+eval point. It needs `EVAL_SPLIT > 0` — with no held-out split there is nothing to rank on, and
+it says so rather than guessing.
+
+W&B is still doing durability work on this run, just not for weights: it captures the full
+stdout to `<output_dir>/wandb/latest-run/files/output.log`, which is a byte-identical copy of
+the tee'd log in `outputs/logs/`. That copy has already earned its keep once.
+
 ### Checkpoints that survive the machine
 
 Resume protects against a crash, not against losing the disk. If you want that — and you will
