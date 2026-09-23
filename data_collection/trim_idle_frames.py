@@ -2,7 +2,7 @@
 
 THE BUG THIS EXISTS FOR (notes/learnings.md, L1). Every demonstration in
 so101_cube_to_bowl_50 opens with the arm standing still while the operator settles
-their hand on the leader — median 34 frames, 1.1 s. ACT learns that pause, and under
+their hand on the leader — median 35 frames, 1.17 s. ACT learns that pause, and under
 action chunking it becomes an ABSORBING STATE: with n_action_steps=20 the rollout
 executes 0.67 s of a 1.13 s pause, the arm does not move, so the observation does not
 change, so the next chunk prescribes the identical pause. Forever.
@@ -11,11 +11,20 @@ The fix is in the data. For each episode, find the frame where motion actually s
 and drop everything before it (less a small margin, so the policy still sees "arm at
 rest, move NOW" rather than "arm already mid-reach").
 
-    onset = first frame where max|action - observation.state[0]| > THRESHOLD
+    onset = first frame where max|action - action[0]| > THRESHOLD
     trim  = max(0, onset - MARGIN)
 
-PER-EPISODE, NEVER A FIXED OFFSET. At least one of the 50 episodes starts moving on
-frame 0; a global offset would eat the first real motion of that demonstration.
+PER-EPISODE, NEVER A FIXED OFFSET. The onsets run from 7 to 91 frames — 0.2 s to 3 s —
+so any single global cut is either too timid for half the episodes or eats the opening of
+the reach in the other half.
+
+MEASURE AGAINST `action[0]`, NOT `observation.state[0]`. This is subtle and it bit once
+already. `action` is the LEADER arm's pose and `observation.state` is the FOLLOWER's, and
+the follower lags under load, so |action - state| is NOT zero at rest — median 0.44 deg
+here, but 8.79 deg on episode 0. Against a 2 deg threshold that one episode reads as
+"already moving on frame 0", gets trimmed by nothing, keeps its full 1.7 s pause, and
+reproduces the exact deadlock this script exists to remove. `|action - action[0]|` is 0 at
+frame 0 by construction and grows only when the operator actually moves the leader.
 
 THE TAIL IS LEFT ALONE. Stillness after the cube lands is the policy learning to stop,
 which is wanted. Only the head is idle-by-accident.
@@ -96,22 +105,32 @@ def load_trajectories(root: Path, meta) -> tuple[np.ndarray, np.ndarray]:
     return action, state
 
 
-def motion_onsets(action: np.ndarray, state: np.ndarray, bounds, threshold: float) -> np.ndarray:
+def motion_onsets(action: np.ndarray, bounds, threshold: float) -> np.ndarray:
     """Per-episode index of the first frame that commands `threshold` deg of motion.
 
-    Measured against the episode's OWN starting pose, not a global home position — each
-    demonstration starts from wherever the previous one left the arm.
+    Measured against the episode's OWN first commanded pose, not a global home position
+    and NOT against `observation.state` — see the module docstring for why that
+    distinction is load-bearing. Each demonstration starts from wherever the previous one
+    left the arm, so the baseline has to be per-episode either way.
 
-    Returns 0 for an episode that is already moving on frame 0 (nothing to trim) and the
-    episode length for one that never moves, which would be a dead demonstration and is
-    reported rather than silently trimmed away.
+    Returns the episode length for an episode that never moves, which would be a dead
+    demonstration and is reported rather than silently trimmed away.
     """
     onsets = np.empty(len(bounds), dtype=np.int64)
     for e, (f0, f1) in enumerate(bounds):
-        travel = np.abs(action[f0:f1] - state[f0]).max(axis=1)
+        travel = np.abs(action[f0:f1] - action[f0]).max(axis=1)
         moved = np.flatnonzero(travel > threshold)
         onsets[e] = moved[0] if moved.size else (f1 - f0)
     return onsets
+
+
+def tracking_offsets(action: np.ndarray, state: np.ndarray, bounds) -> np.ndarray:
+    """Per-episode |action - observation.state| at frame 0: the leader/follower gap.
+
+    Reported by `profile` because it is the quantity that makes the naive onset
+    definition wrong, and it is invisible unless you go looking for it.
+    """
+    return np.array([np.abs(action[f0] - state[f0]).max() for f0, _ in bounds])
 
 
 def summarise(onsets: np.ndarray, lengths: np.ndarray, total_frames: int) -> str:
@@ -124,16 +143,30 @@ def summarise(onsets: np.ndarray, lengths: np.ndarray, total_frames: int) -> str
 
 def print_profile(action, state, bounds, lengths, total_frames) -> None:
     print("Leading idle frames per episode, by motion threshold")
-    print("  onset = first frame with max|action - state_at_frame_0| > threshold\n")
+    print("  onset = first frame with max|action - action_at_frame_0| > threshold\n")
     print(f"{'threshold':>10} {'median':>8} {'mean':>8} {'min':>5} {'max':>5} "
           f"{'frames cut':>11} {'% of data':>10}")
     print("-" * 62)
     for thr in PROFILE_THRESHOLDS:
-        o = motion_onsets(action, state, bounds, thr)
+        o = motion_onsets(action, bounds, thr)
         print(f"{thr:>9.1f}° {np.median(o):>8.1f} {o.mean():>8.1f} {o.min():>5d} "
               f"{o.max():>5d} {o.sum():>11d} {100 * o.sum() / total_frames:>9.1f}%")
-    print("\n  min = 0 on any row means at least one episode starts moving immediately.")
-    print("  That is why the trim is per-episode and never a fixed offset.")
+    print("\n  The min/max spread is why the trim is per-episode and never a fixed offset.")
+
+    # The leader/follower gap, which is what makes `observation.state[0]` the wrong
+    # baseline. Printed because an outlier here is silent otherwise, and on this dataset
+    # exactly one episode has one big enough to defeat a 2 deg threshold.
+    off = tracking_offsets(action, state, bounds)
+    print(f"\n  Leader/follower gap |action - state| at frame 0, per episode:")
+    print(f"    median {np.median(off):.2f}°  mean {off.mean():.2f}°  "
+          f"min {off.min():.2f}°  max {off.max():.2f}°")
+    for thr in PROFILE_THRESHOLDS:
+        n = int((off > thr).sum())
+        if n:
+            eps = np.flatnonzero(off > thr).tolist()
+            print(f"    {n} episode(s) exceed {thr}° on this gap ALONE: {eps}")
+    print("    Measuring the onset against state[0] would read those as already moving")
+    print("    at frame 0 and trim them by nothing. This measures against action[0].")
 
 
 def build(src: LeRobotDataset, dst_repo_id: str, dst_root: Path, trims: np.ndarray,
@@ -278,7 +311,7 @@ def verify(src_root: Path, dst_root: Path, src_repo_id: str, dst_repo_id: str,
 
     # And the thing the whole exercise is for: the pause should be gone.
     action, state = load_trajectories(dst_root, dst.meta)
-    onsets = motion_onsets(action, state, db, threshold)
+    onsets = motion_onsets(action, db, threshold)
     print(f"\n  Residual idle frames at {threshold:.1f}° in the TRIMMED dataset:")
     lengths = np.array([b - a for a, b in db])
     print(f"    {summarise(onsets, lengths, dst.meta.total_frames)}")
@@ -331,7 +364,7 @@ def main() -> int:
         print_profile(action, state, bounds, lengths, total_frames)
         return 0
 
-    onsets = motion_onsets(action, state, bounds, args.threshold)
+    onsets = motion_onsets(action, bounds, args.threshold)
     if (onsets >= lengths).any():
         dead = np.flatnonzero(onsets >= lengths).tolist()
         print(f"error: episodes {dead} never move {args.threshold}° from their start pose. "

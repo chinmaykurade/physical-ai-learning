@@ -21,7 +21,7 @@ step N and then re-queries the cameras. If the chunk is still FLAT at step N —
 has not been asked to go anywhere — then the arm does not move, the observation does not
 change, and the next chunk is the same chunk. The rollout deadlocks. That is not a
 hypothetical: it is exactly what the first cube-to-bowl policy did below N≈40, because
-every demonstration opened with a 1.1 s pause that ACT learned faithfully
+every demonstration opened with a 1.17 s pause that ACT learned faithfully
 (notes/learnings.md, L1).
 
     old policy, at frame 0 of episode 0, `reach`:

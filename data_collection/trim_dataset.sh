@@ -12,7 +12,7 @@
 #   ./trim_dataset.sh verify    # re-check an already-built dataset against the source
 #
 # WHY. Every one of the 50 demonstrations opens with the operator settling their hand
-# on the leader before teleoperating — median 34 frames, 1.1 s of the arm sitting
+# on the leader before teleoperating — median 35 frames, 1.17 s of the arm sitting
 # still. ACT learned that pause, and under action chunking it is an ABSORBING STATE:
 # a rollout at n_action_steps=20 executes half the pause, the arm does not move, the
 # observation does not change, and the next chunk prescribes the same pause. The arm
@@ -43,13 +43,21 @@ DST_NAME=so101_cube_to_bowl_50_trimmed
 # finalize and the verify pass end to end; far too few to train on.
 SMOKE_EPISODES=3
 
-# --- Motion threshold, in degrees of commanded travel from the episode's own starting
-# pose. The onset is the first frame that exceeds it.
+# --- Motion threshold, in degrees of commanded travel from the episode's own FIRST
+# COMMANDED POSE, action[0]. The onset is the first frame that exceeds it.
+#
+# It is action[0] and not observation.state[0], and that distinction cost a whole
+# training run. `action` is the LEADER arm's pose, `observation.state` is the
+# FOLLOWER's, and the follower lags under load, so the two differ at rest — by 0.44°
+# on a median episode and by 8.79° on episode 0. Measured against state[0], episode 0
+# cleared this threshold on frame 0, was read as "already moving", got trimmed by
+# nothing, kept its full 1.7 s pause and reproduced the deadlock. `profile` now prints
+# that gap per episode so an outlier cannot hide again.
 #
 # 2.0 is the working value: servo read noise on this rig is ~0.1°, and a deliberate
 # reach passes 2° within a frame or two of starting, so this sits in the wide gap
 # between them. `profile` prints the whole curve — it is flat between 1° and 5°
-# (median 28 → 36 frames), which is what "the threshold is not critical" looks like.
+# (median 33.5 → 37 frames), which is what "the threshold is not critical" looks like.
 #
 # Raise it if the retrained policy is STILL flat through k=20 in the chunk profile:
 # that means real motion is still being counted as part of the pause.
@@ -58,7 +66,7 @@ THRESHOLD=2.0
 # --- Frames kept in front of the onset. The policy should see "arm at rest, move now",
 # not "arm already mid-reach" — a dataset whose every episode opens mid-motion has no
 # examples of starting from a standstill, which is exactly the state a rollout begins
-# in. 3 frames = 0.1 s, enough to anchor the start pose and far short of the 1.1 s that
+# in. 3 frames = 0.1 s, enough to anchor the start pose and far short of the 1.17 s that
 # caused the deadlock.
 MARGIN=3
 

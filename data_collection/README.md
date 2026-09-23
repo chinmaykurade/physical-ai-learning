@@ -287,26 +287,40 @@ arm never starts. Full write-up in [../notes/learnings.md](../notes/learnings.md
 **The trim is per-episode, computed from the data:**
 
 ```
-onset = first frame where max|action - observation.state[frame 0]| > THRESHOLD   (2.0°)
-trim  = max(0, onset - MARGIN)                                                   (3 frames)
+onset = first frame where max|action - action[frame 0]| > THRESHOLD   (2.0°)
+trim  = max(0, onset - MARGIN)                                        (3 frames)
 ```
 
-measured against *that* episode's own starting pose. It is deliberately not a fixed offset
-in seconds. `profile` shows why:
+**The baseline is `action[frame 0]`, not `observation.state[frame 0]`**, and that
+distinction cost a training run. `action` is the **leader** arm's pose; `observation.state`
+is the **follower**'s. The follower lags under load, so the two are *not* equal at rest:
+
+```
+leader/follower gap at frame 0:  median 0.44°   mean 0.66°   min 0.22°   max 8.79°
+```
+
+Episode 0's gap is 8.79°. Measured against `state[0]`, it cleared a 2° threshold on frame 0,
+was read as "already moving", got trimmed by **nothing**, kept its full 1.7 s pause, and
+reproduced the exact deadlock this exists to remove — while the other 49 episodes were fixed.
+`|action − action[0]|` is 0 at frame 0 by construction and grows only when the operator
+actually moves the leader. `profile` now prints the gap per episode so an outlier cannot
+hide again.
+
+`profile` on the source dataset:
 
 | threshold | median | mean | min | max | frames cut |
 |---|---|---|---|---|---|
-| 0.5° | 13 | 13.4 | 0 | 37 | 669 (3.7%) |
-| 1.0° | 28.5 | 27.2 | 0 | 85 | 1358 (7.6%) |
-| **2.0°** | **34** | **31.9** | **0** | **91** | **1595 (8.9%)** |
-| 5.0° | 35.5 | 34.3 | 0 | 93 | 1713 (9.5%) |
-| 10.0° | 40 | 37.7 | 12 | 94 | 1887 (10.5%) |
+| 0.5° | 22.5 | 23.3 | 5 | 89 | 1166 (6.5%) |
+| 1.0° | 33.5 | 31.7 | 6 | 91 | 1585 (8.8%) |
+| **2.0°** | **35** | **32.9** | **7** | **91** | **1645 (9.2%)** |
+| 5.0° | 37 | 35.5 | 11 | 93 | 1773 (9.9%) |
+| 10.0° | 40 | 37.8 | 12 | 94 | 1891 (10.5%) |
 
-**`min = 0` is the load-bearing entry.** At least one episode starts moving on frame 0, so
-any global offset would eat the opening of its reach. The spread runs 0 to 91 frames — 0 to
-3 seconds.
+The onsets run **7 to 91 frames — 0.2 s to 3 s**, which is why a fixed offset in seconds
+cannot work: any single cut is either too timid for half the episodes or eats the opening of
+the reach in the other half.
 
-2.0° sits in the flat part of the curve (1°→5° moves the median by 8 frames), which is what
+2.0° sits in the flat part of the curve (1°→5° moves the median by 3.5 frames), which is what
 "the threshold is not critical" looks like. Servo read noise on this rig is ~0.1°.
 
 The **3-frame margin is the only fixed quantity**, and it is kept in front of each onset on
@@ -320,8 +334,8 @@ which is wanted. Only the head is idle by accident.
 ### Result
 
 ```
-50 episodes, 17953 → 16505 frames (1448 cut, 8.1%), lengths 271–358
-220 MB → 190 MB, 5.1 min wall clock
+50 episodes, 17953 → 16458 frames (1495 cut, 8.3%), lengths 271–356
+no episode trimmed by 0 frames, ~5 min wall clock
 ```
 
 ### Why it rebuilds rather than edits
@@ -363,7 +377,7 @@ all 12 checks passed on the real build:
 
 ```
 [ok] episode count preserved                          50 -> 50
-[ok] frame count matches the trim plan                17953 - 1448 = 16505
+[ok] frame count matches the trim plan                17953 - 1495 = 16458
 [ok] feature schema unchanged
 [ok] fps unchanged
 [ok] encoder settings match source                    (both cameras)
@@ -372,7 +386,7 @@ all 12 checks passed on the real build:
 [ok] frame 0 action == source frame at the trim point
 [ok] task string preserved
 [ok] last frame of each episode unchanged             (tail not trimmed)
-[ok] video frame 0 matches the source frame it came from   1.35/255 mean |Δpixel|
+[ok] video frame 0 matches the source frame it came from   ~1.4/255 mean |Δpixel|
 [ok] residual pause is at most the margin plus a frame     max 3 frames
 ```
 

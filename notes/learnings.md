@@ -131,22 +131,23 @@ The fix is in the **data**, not the config.
    pulls in older chunks whose later indices are already past the pause. The 1.3 s dead period
    at the start remains.
 
-### Follow-up — the fix, half-built (2026-09-22)
+### Follow-up — building the fix, and getting it wrong once (2026-09-23)
 
-Fix 1 is built and verified; the retrain has not run yet, so **this entry does not yet say
-whether trimming actually cured the deadlock.** What exists:
+Fix 1 is built. The first build trained for 4.5 hours and still deadlocked on one episode;
+the cause was a bug in the trim, described below. **This entry does not yet say whether the
+corrected trim cures the deadlock** — that needs the second retrain.
 
 `data_collection/trim_dataset.sh` writes a trimmed copy of the dataset — per-episode, from
 the data, never a fixed offset:
 
 ```
-onset = first frame where max|action - observation.state[frame 0]| > 2.0 deg
+onset = first frame where max|action - action[frame 0]| > 2.0 deg
 trim  = max(0, onset - 3)
 ```
 
-**17953 → 16505 frames, 1448 cut (8.1%), 50 episodes intact**, 5.1 min. The onset spread is
-0 to 91 frames: one episode starts moving on frame 0, so any global cut would have eaten
-the opening of its reach. The 3-frame margin is deliberate — the policy needs examples of
+**17953 → 16458 frames, 1495 cut (8.3%), 50 episodes intact**, ~5 min. The onset spread is
+7 to 91 frames — 0.2 s to 3 s — so any single global cut is either too timid for half the
+episodes or eats the opening of the reach in the other half. The 3-frame margin is deliberate — the policy needs examples of
 starting *from a standstill*, which is the state a rollout actually begins in.
 
 Two things worth keeping from building it:
@@ -166,6 +167,36 @@ offset — and reproducible, where the table above was one unrecorded episode.
 > **Lesson, and it is the same one as before, one level down:** the *baseline* was the
 > confound last time; this time it was the *metric*. Both were "the right measurement taken
 > against the wrong zero."
+
+**And then the same confound bit the trim itself.** The onset detector I wrote used
+`max|action - observation.state[frame 0]|` — the very quantity I had just finished
+documenting as contaminated. The gap at rest is **0.44 deg on a median episode but 8.79 deg
+on episode 0**. Against a 2 deg threshold, episode 0 read as "already moving on frame 0",
+was trimmed by **zero frames**, kept its full 1.7 s pause, and reproduced the deadlock after
+a 4.5 hour retrain — while the other 49 episodes were fixed.
+
+The acceptance test caught it, which is the one satisfying part. Chunk travel at an episode
+start, mean over 10 sampled episodes:
+
+| k | untrimmed | trimmed v1 |
+|---|---|---|
+| 10 | 0.64 deg | 16.75 deg |
+| 20 | 6.76 deg | 48.15 deg |
+
+Nine of ten episodes ramped within 5-8 steps. Episode 0 stayed flat until step 56 — and its
+*demonstration* was flat until step 51, which is what pointed at the data rather than the
+policy. Its length was 358: the original, untrimmed.
+
+Fix: baseline on `action[frame 0]`, which is 0 at frame 0 by construction. Costs 50 more
+frames across the dataset and takes episode 0 from 0 to 44 frames trimmed. `profile` now
+prints the leader/follower gap per episode, because a single outlier in it is otherwise
+completely silent.
+
+> **Lesson, third time:** the same contaminated difference wrecked the baseline, then the
+> metric, then the trim. Writing the confound down was not enough to stop me reaching for
+> `|action - state|` the next time I needed "how far has it moved". If a quantity is wrong
+> as a measure of motion, it is wrong everywhere — go delete every use of it, not just the
+> one in front of you.
 
 **`streaming_encoding=True` drops frames when the encoder queue fills.** It is what
 `record_episodes.sh` uses, correctly, at 30 fps against a live camera — dropping a frame

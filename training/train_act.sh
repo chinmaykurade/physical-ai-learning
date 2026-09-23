@@ -37,18 +37,22 @@ VENV=/home/chinmay/lerobot-env
 # or — as now — the DST_NAME in ../data_collection/trim_dataset.sh.
 #
 # so101_cube_to_bowl_50_trimmed is the recorded 50 episodes with the operator's settling
-# pause cut off the head of each one: 16505 frames instead of 17953. The untrimmed
-# dataset taught ACT a 1.1 s pause at the start of every episode, which under action
+# pause cut off the head of each one: 16458 frames instead of 17953. The untrimmed
+# dataset taught ACT a 1.17 s pause at the start of every episode, which under action
 # chunking is an absorbing state — the arm executes the pause, the observation never
 # changes, and the next chunk prescribes the same pause (notes/learnings.md, L1). Point
 # this back at so101_cube_to_bowl_50 only to reproduce that failure deliberately.
+#
+# REBUILD IT IF IT IS MISSING, do not reach for an older copy: the first trimmed build
+# left episode 0 untrimmed (its leader/follower gap defeated the onset threshold) and
+# deadlocked after a full retrain. 16505 frames means you have that broken v1.
 HF_USER=chinmaykurade
 DATASET_NAME=so101_cube_to_bowl_50_trimmed
 
 # --- Job identity. JOB_NAME names the output dir, the log, and the W&B run, so
 # changing it is how you keep two experiments apart (lerobot REFUSES to reuse an
 # existing output_dir unless resuming).
-JOB_NAME=act_cube_to_bowl_trimmed
+JOB_NAME=act_cube_to_bowl_trimmed_v2
 
 # --- Training length. lerobot's default is 100k. With 50 episodes / ~16.5k frames
 # that is ~48 epochs; ACT on a dataset this size is typically converged well before
